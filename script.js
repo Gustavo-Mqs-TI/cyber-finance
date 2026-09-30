@@ -1,15 +1,13 @@
 /* =========================================================
    FINANÇA — Controle Financeiro Pessoal
-   Script completo
+   Integrado com Firebase (Auth + Firestore)
 ========================================================= */
 
 /* =========================================================
    ESTADO GLOBAL
 ========================================================= */
 
-let usuarios = JSON.parse(localStorage.getItem("financa_usuarios")) || [];
-let usuarioLogado = null;
-
+let usuarioLogado = null;         // { uid, nome, email }
 let transacoes = [];
 let configUsuario = {
   beneficios: [],
@@ -49,14 +47,6 @@ function $(id) {
 
 function gerarId() {
   return Date.now() + Math.floor(Math.random() * 1000);
-}
-
-function normalizarIdBanco(nome) {
-  return nome
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "_")
-    .replace(/[^a-zA-Z0-9_]/g, "");
 }
 
 function dataHoje() {
@@ -99,6 +89,18 @@ function toast(mensagem, tipo = "info") {
     el.classList.add("hide");
     setTimeout(() => el.remove(), 250);
   }, 2800);
+}
+
+/* =========================================================
+   STATUS NA NUVEM
+========================================================= */
+
+function setStatusCloud(status, texto) {
+  const el = $("statusCloud");
+  if (!el) return;
+  el.className = `status-cloud ${status}`;
+  const label = el.querySelector(".label");
+  if (label) label.textContent = texto;
 }
 
 /* =========================================================
@@ -163,42 +165,50 @@ function mostrarApp() {
 }
 
 /* =========================================================
-   LOGIN / REGISTRO / RECUPERAR
+   AUTENTICAÇÃO (Firebase)
 ========================================================= */
 
-if (usuarios.length === 0) {
-  usuarios.push({
-    id: 1,
-    nome: "Usuário Demo",
-    email: "demo@financeiro.com",
-    senha: "123456",
-  });
-  localStorage.setItem("financa_usuarios", JSON.stringify(usuarios));
+// Aguarda o Firebase estar pronto
+function whenFirebaseReady(cb) {
+  if (window.firebaseReady) {
+    cb();
+  } else {
+    window.addEventListener("firebase-ready", cb, { once: true });
+  }
 }
 
-function salvarUsuarios() {
-  localStorage.setItem("financa_usuarios", JSON.stringify(usuarios));
-}
-
-$("formLogin").addEventListener("submit", (e) => {
+// -------- LOGIN --------
+$("formLogin").addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = $("loginEmail").value.trim();
   const senha = $("loginSenha").value;
 
-  const user = usuarios.find((u) => u.email === email && u.senha === senha);
-  if (!user) {
-    toast("E-mail ou senha incorretos", "error");
+  if (!email || !senha) {
+    toast("Preencha e-mail e senha", "error");
     return;
   }
 
-  usuarioLogado = { id: user.id, nome: user.nome, email: user.email };
-  sessionStorage.setItem("financa_usuario", JSON.stringify(usuarioLogado));
+  const btn = e.target.querySelector("button[type=submit]");
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Entrando...";
 
-  toast(`Bem-vindo, ${user.nome.split(" ")[0]}!`, "success");
-  iniciarSessao();
+  try {
+    setStatusCloud("syncing", "Entrando…");
+    await window.fbLogin(email, senha);
+    toast("Bem-vindo!", "success");
+  } catch (err) {
+    console.error(err);
+    toast(traduzErroFirebase(err), "error");
+    setStatusCloud("offline", "Erro no login");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 });
 
-$("formRegistro").addEventListener("submit", (e) => {
+// -------- REGISTRO --------
+$("formRegistro").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const nome = $("regNome").value.trim();
@@ -208,30 +218,131 @@ $("formRegistro").addEventListener("submit", (e) => {
 
   if (senha !== confirmar) { toast("As senhas não coincidem", "error"); return; }
   if (senha.length < 6) { toast("A senha deve ter no mínimo 6 caracteres", "error"); return; }
-  if (usuarios.find((u) => u.email === email)) { toast("E-mail já cadastrado", "error"); return; }
 
-  usuarios.push({ id: gerarId(), nome, email, senha });
-  salvarUsuarios();
+  const btn = e.target.querySelector("button[type=submit]");
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Criando conta...";
 
-  toast("Conta criada com sucesso!", "success");
-  $("formRegistro").reset();
-  mostrarTela("telaLogin");
+  try {
+    await window.fbCadastrar(email, senha, nome);
+    toast("Conta criada com sucesso!", "success");
+    $("formRegistro").reset();
+  } catch (err) {
+    console.error(err);
+    toast(traduzErroFirebase(err), "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 });
 
-$("formRecuperar").addEventListener("submit", (e) => {
+// -------- RECUPERAR SENHA --------
+$("formRecuperar").addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = $("recEmail").value.trim();
-  const user = usuarios.find((u) => u.email === email);
 
-  if (!user) { toast("E-mail não encontrado", "error"); return; }
-
-  toast(`Sua senha é: ${user.senha}`, "info");
-  $("formRecuperar").reset();
-  mostrarTela("telaLogin");
+  try {
+    await window.fbRecuperarSenha(email);
+    toast("Enviamos um e-mail de recuperação. Verifique sua caixa de entrada.", "success");
+    $("formRecuperar").reset();
+    mostrarTela("telaLogin");
+  } catch (err) {
+    console.error(err);
+    toast(traduzErroFirebase(err), "error");
+  }
 });
 
+function traduzErroFirebase(err) {
+  const code = err?.code || "";
+  const map = {
+    "auth/email-already-in-use": "Este e-mail já está cadastrado",
+    "auth/invalid-email": "E-mail inválido",
+    "auth/weak-password": "Senha muito fraca (mínimo 6 caracteres)",
+    "auth/user-not-found": "Usuário não encontrado",
+    "auth/wrong-password": "Senha incorreta",
+    "auth/invalid-credential": "E-mail ou senha incorretos",
+    "auth/too-many-requests": "Muitas tentativas. Tente novamente em alguns minutos",
+    "auth/network-request-failed": "Erro de conexão. Verifique sua internet",
+    "permission-denied": "Permissão negada no banco de dados",
+  };
+  return map[code] || err.message || "Erro inesperado";
+}
+
 /* =========================================================
-   CONFIGURAÇÃO INICIAL
+   LOGOUT
+========================================================= */
+
+async function logout() {
+  try {
+    await window.fbLogout();
+  } catch (e) {
+    console.warn("Logout erro:", e);
+  }
+  usuarioLogado = null;
+  transacoes = [];
+  configUsuario = { beneficios: [], bancos: [], modalidades: [] };
+  beneficioSelecionado = null;
+  bancoSelecionadoFatura = null;
+  toast("Sessão encerrada", "info");
+  mostrarTela("telaLogin");
+}
+
+/* =========================================================
+   SESSÃO — CARREGAR DADOS DO FIRESTORE
+========================================================= */
+
+async function iniciarSessao(user) {
+  usuarioLogado = {
+    uid: user.uid,
+    nome: user.displayName || user.email.split("@")[0],
+    email: user.email,
+  };
+
+  $("userNome").textContent = usuarioLogado.nome;
+  $("userEmail").textContent = usuarioLogado.email;
+  $("userAvatar").textContent = usuarioLogado.nome.charAt(0).toUpperCase();
+
+  setStatusCloud("syncing", "Carregando…");
+
+  try {
+    // Carrega config
+    const cfg = await window.fbCarregarDoc(user.uid, "config", "geral");
+    if (!cfg) {
+      // Primeira vez — abre tela de configuração
+      mostrarTela("telaConfiguracao");
+      setStatusCloud("online", "Conectado");
+      return;
+    }
+    configUsuario = {
+      beneficios: cfg.beneficios || [],
+      bancos: cfg.bancos || [],
+      modalidades: cfg.modalidades || [],
+    };
+
+    // Carrega cores
+    const cores = await window.fbCarregarDoc(user.uid, "cores", "geral");
+    if (cores) coresPersonalizadas = { ...coresPersonalizadas, ...cores };
+
+    // Carrega transações
+    transacoes = await window.fbCarregarColecao(user.uid, "transacoes");
+
+    aplicarConfiguracoes();
+    aplicarCores();
+    mostrarApp();
+    atualizarTudo();
+    iniciarModulos();
+
+    setStatusCloud("online", "Sincronizado");
+  } catch (e) {
+    console.error(e);
+    toast("Erro ao carregar dados", "error");
+    setStatusCloud("offline", "Erro");
+  }
+}
+
+/* =========================================================
+   CONFIGURAÇÃO INICIAL (primeira vez)
 ========================================================= */
 
 function adicionarItemConfig(listaId) {
@@ -261,7 +372,7 @@ function removerItemConfig(btn) {
   btn.parentElement.remove();
 }
 
-$("formConfiguracao").addEventListener("submit", (e) => {
+$("formConfiguracao").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const beneficios = [...document.querySelectorAll("#listaBeneficiosConfig .item-input")]
@@ -282,57 +393,20 @@ $("formConfiguracao").addEventListener("submit", (e) => {
   }
 
   configUsuario = { beneficios, bancos, modalidades };
-  salvarConfiguracoes(usuarioLogado.id);
+
+  setStatusCloud("syncing", "Salvando…");
+  await window.fbSalvarDoc(usuarioLogado.uid, configUsuario, "config", "geral");
 
   toast("Configurações salvas!", "success");
   aplicarConfiguracoes();
   mostrarApp();
   atualizarTudo();
-
   iniciarModulos();
+  setStatusCloud("online", "Sincronizado");
 });
 
 /* =========================================================
-   PERSISTÊNCIA
-========================================================= */
-
-function salvarConfiguracoes(userId) {
-  localStorage.setItem(`financa_config_${userId}`, JSON.stringify(configUsuario));
-}
-
-function carregarConfiguracoes(userId) {
-  const raw = localStorage.getItem(`financa_config_${userId}`);
-  if (raw) {
-    configUsuario = JSON.parse(raw);
-    return true;
-  }
-  return false;
-}
-
-function salvarTransacoes() {
-  if (!usuarioLogado) return;
-  localStorage.setItem(`financa_dados_${usuarioLogado.id}`, JSON.stringify(transacoes));
-}
-
-function carregarTransacoes() {
-  if (!usuarioLogado) return;
-  const raw = localStorage.getItem(`financa_dados_${usuarioLogado.id}`);
-  transacoes = raw ? JSON.parse(raw) : [];
-}
-
-function salvarCores() {
-  if (!usuarioLogado) return;
-  localStorage.setItem(`financa_cores_${usuarioLogado.id}`, JSON.stringify(coresPersonalizadas));
-}
-
-function carregarCores() {
-  if (!usuarioLogado) return;
-  const raw = localStorage.getItem(`financa_cores_${usuarioLogado.id}`);
-  if (raw) coresPersonalizadas = JSON.parse(raw);
-}
-
-/* =========================================================
-   APLICAR CONFIGURAÇÕES
+   APLICAR CONFIGURAÇÕES NOS SELECTS
 ========================================================= */
 
 function aplicarConfiguracoes() {
@@ -340,7 +414,7 @@ function aplicarConfiguracoes() {
     if (!sel) return;
     sel.innerHTML = '<option value="">Nenhum</option>';
     configUsuario.bancos.forEach((b) => {
-      sel.innerHTML += `<option value="${b}">${b}</option>`;
+      sel.innerHTML += `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`;
     });
   });
 
@@ -350,8 +424,8 @@ function aplicarConfiguracoes() {
     configUsuario.bancos.forEach((b) => {
       filtroBanco.innerHTML += `
         <label class="check-pill">
-          <input type="checkbox" value="${b}">
-          <span>${b}</span>
+          <input type="checkbox" value="${escapeAttr(b)}">
+          <span>${escapeHtml(b)}</span>
         </label>
       `;
     });
@@ -363,7 +437,7 @@ function aplicarConfiguracoes() {
     if (!sel) return;
     sel.innerHTML = '<option value="">Selecione</option>';
     todasModalidades.forEach((m) => {
-      sel.innerHTML += `<option value="${m}">${m}</option>`;
+      sel.innerHTML += `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`;
     });
   });
 
@@ -373,8 +447,8 @@ function aplicarConfiguracoes() {
     todasModalidades.forEach((m) => {
       filtroMod.innerHTML += `
         <label class="check-pill">
-          <input type="checkbox" value="${m}">
-          <span>${m}</span>
+          <input type="checkbox" value="${escapeAttr(m)}">
+          <span>${escapeHtml(m)}</span>
         </label>
       `;
     });
@@ -386,7 +460,7 @@ function aplicarConfiguracoes() {
 }
 
 /* =========================================================
-   INICIAR SESSÃO
+   INICIALIZAR MÓDULOS
 ========================================================= */
 
 function iniciarModulos() {
@@ -395,47 +469,6 @@ function iniciarModulos() {
   if (typeof window.recorrentesIniciar === "function") window.recorrentesIniciar();
   if (typeof window.metasIniciar === "function") window.metasIniciar();
   if (typeof window.graficosIniciar === "function") window.graficosIniciar();
-}
-
-function iniciarSessao() {
-  $("userNome").textContent = usuarioLogado.nome;
-  $("userEmail").textContent = usuarioLogado.email;
-  $("userAvatar").textContent = usuarioLogado.nome.charAt(0).toUpperCase();
-
-  const jaConfigurado = carregarConfiguracoes(usuarioLogado.id);
-  carregarTransacoes();
-  carregarCores();
-
-  if (!jaConfigurado) {
-    mostrarTela("telaConfiguracao");
-  } else {
-    aplicarConfiguracoes();
-    aplicarCores();
-    mostrarApp();
-    atualizarTudo();
-    iniciarModulos();
-  }
-}
-
-function verificarLogin() {
-  const raw = sessionStorage.getItem("financa_usuario");
-  if (raw) {
-    usuarioLogado = JSON.parse(raw);
-    iniciarSessao();
-  } else {
-    mostrarTela("telaLogin");
-  }
-}
-
-function logout() {
-  sessionStorage.removeItem("financa_usuario");
-  usuarioLogado = null;
-  transacoes = [];
-  configUsuario = { beneficios: [], bancos: [], modalidades: [] };
-  beneficioSelecionado = null;
-  bancoSelecionadoFatura = null;
-  toast("Sessão encerrada", "info");
-  mostrarTela("telaLogin");
 }
 
 /* =========================================================
@@ -486,10 +519,10 @@ function toggleFiltro(containerId, btnEl) {
 }
 
 /* =========================================================
-   CRUD — LANÇAMENTOS
+   CRUD — LANÇAMENTOS (Firestore)
 ========================================================= */
 
-$("formGasto").addEventListener("submit", (e) => {
+$("formGasto").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const desc = $("descricao").value.trim();
@@ -504,7 +537,7 @@ $("formGasto").addEventListener("submit", (e) => {
     return;
   }
 
-  transacoes.push({
+  const nova = {
     id: gerarId(),
     descricao: desc,
     valor: val,
@@ -512,22 +545,43 @@ $("formGasto").addEventListener("submit", (e) => {
     modalidade: modVal,
     banco: bancoVal || "",
     data: dataVal,
-  });
+  };
 
-  salvarTransacoes();
-  e.target.reset();
-  $("data").value = dataHoje();
+  try {
+    setStatusCloud("syncing", "Salvando…");
+    const fbId = await window.fbAdicionarItem(usuarioLogado.uid, "transacoes", nova);
+    nova._fbId = fbId;
+    transacoes.push(nova);
 
-  toast("Lançamento adicionado!", "success");
-  atualizarTudo();
+    e.target.reset();
+    $("data").value = dataHoje();
+
+    toast("Lançamento adicionado!", "success");
+    atualizarTudo();
+    setStatusCloud("online", "Sincronizado");
+  } catch (err) {
+    console.error(err);
+    toast("Erro ao salvar", "error");
+    setStatusCloud("offline", "Erro");
+  }
 });
 
-function removerTransacao(id) {
+async function removerTransacao(id) {
   if (!confirm("Deseja realmente excluir este lançamento?")) return;
-  transacoes = transacoes.filter((t) => t.id !== id);
-  salvarTransacoes();
-  toast("Lançamento excluído", "info");
-  atualizarTudo();
+  const item = transacoes.find((t) => t.id === id);
+  if (!item) return;
+
+  try {
+    setStatusCloud("syncing", "Removendo…");
+    if (item._fbId) await window.fbExcluirItem(usuarioLogado.uid, "transacoes", item._fbId);
+    transacoes = transacoes.filter((t) => t.id !== id);
+    toast("Lançamento excluído", "info");
+    atualizarTudo();
+    setStatusCloud("online", "Sincronizado");
+  } catch (err) {
+    console.error(err);
+    toast("Erro ao excluir", "error");
+  }
 }
 
 function abrirModalEditar(id) {
@@ -550,14 +604,14 @@ function fecharModalEditar() {
   $("formEditar").reset();
 }
 
-$("formEditar").addEventListener("submit", (e) => {
+$("formEditar").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const id = parseInt($("editarId").value);
   const idx = transacoes.findIndex((t) => t.id === id);
   if (idx === -1) return;
 
-  transacoes[idx] = {
+  const atualizado = {
     id,
     descricao: $("editarDescricao").value.trim(),
     valor: parseFloat($("editarValor").value),
@@ -567,10 +621,25 @@ $("formEditar").addEventListener("submit", (e) => {
     data: $("editarData").value,
   };
 
-  salvarTransacoes();
-  fecharModalEditar();
-  toast("Lançamento atualizado!", "success");
-  atualizarTudo();
+  const fbId = transacoes[idx]._fbId;
+  atualizado._fbId = fbId;
+  transacoes[idx] = atualizado;
+
+  try {
+    setStatusCloud("syncing", "Atualizando…");
+    if (fbId) {
+      const dados = { ...atualizado };
+      delete dados._fbId;
+      await window.fbAtualizarItem(usuarioLogado.uid, "transacoes", fbId, dados);
+    }
+    fecharModalEditar();
+    toast("Lançamento atualizado!", "success");
+    atualizarTudo();
+    setStatusCloud("online", "Sincronizado");
+  } catch (err) {
+    console.error(err);
+    toast("Erro ao atualizar", "error");
+  }
 });
 
 /* =========================================================
@@ -783,7 +852,6 @@ function renderFaturaCards() {
     else if (t.tipo === "saida" && t.modalidade !== "Crédito") saldosBancos[t.banco] -= t.valor;
   });
 
-  // Adiciona parcelas do mês atual por banco
   if (typeof window.totalParcelasPorBancoNoMes === "function") {
     const mesAtual = new Date().toISOString().substring(0, 7);
     const parcelasMes = window.totalParcelasPorBancoNoMes(mesAtual);
@@ -807,13 +875,11 @@ function renderFaturaCards() {
 
 function filtrarBancoCredito(nome) {
   bancoSelecionadoFatura = nome;
-
   const mesAtual = new Date().toISOString().substring(0, 7);
   comprasOriginais = transacoes
     .filter((t) => t.modalidade === "Crédito" && t.tipo === "saida" && t.banco === nome)
     .sort((a, b) => new Date(b.data) - new Date(a.data));
 
-  // Adiciona as parcelas do mês
   if (typeof window.parcelasDoMes === "function") {
     const parcelas = window.parcelasDoMes(mesAtual).filter((p) => p.banco === nome);
     parcelas.forEach((p) => {
@@ -930,7 +996,7 @@ function abrirPersonalizacaoCores() {
   $("telaCores").classList.add("active");
 }
 
-$("formCores").addEventListener("submit", (e) => {
+$("formCores").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   coresPersonalizadas.entrada = $("corEntrada").value;
@@ -945,13 +1011,20 @@ $("formCores").addEventListener("submit", (e) => {
     coresPersonalizadas.bancos[inp.dataset.nome] = inp.value;
   });
 
-  salvarCores();
-  aplicarCores();
+  try {
+    setStatusCloud("syncing", "Salvando cores…");
+    await window.fbSalvarDoc(usuarioLogado.uid, coresPersonalizadas, "cores", "geral");
+    aplicarCores();
 
-  if (typeof window.criptoAplicarCoresDoModal === "function") window.criptoAplicarCoresDoModal();
+    if (typeof window.criptoAplicarCoresDoModal === "function") window.criptoAplicarCoresDoModal();
 
-  toast("Cores salvas com sucesso!", "success");
-  fecharTodosModais();
+    toast("Cores salvas com sucesso!", "success");
+    fecharTodosModais();
+    setStatusCloud("online", "Sincronizado");
+  } catch (err) {
+    console.error(err);
+    toast("Erro ao salvar cores", "error");
+  }
 });
 
 function aplicarCores() {
@@ -1004,7 +1077,7 @@ function renderPerfilInfo() {
   `;
 }
 
-function abrirConfiguracoes() {
+async function abrirConfiguracoes() {
   fecharTodosModais();
 
   const listaB = $("listaBeneficiosConfig");
@@ -1041,6 +1114,62 @@ function abrirConfiguracoes() {
   });
 
   mostrarTela("telaConfiguracao");
+}
+
+/* =========================================================
+   MIGRAR DADOS DO LOCALSTORAGE
+========================================================= */
+
+async function migrarDadosLocalStorage() {
+  if (!usuarioLogado) return;
+
+  const raw = prompt(
+    "Isso vai copiar os dados que estão salvos no NAVEGADOR para a NUVEM.\n\nDigite o e-mail da conta antiga (a que você usava antes) para confirmar:"
+  );
+  if (!raw) return;
+
+  try {
+    setStatusCloud("syncing", "Migrando…");
+
+    let migrados = 0;
+
+    // Config
+    const cfgRaw = localStorage.getItem(`financa_config_${raw}`);
+    if (cfgRaw) {
+      const cfg = JSON.parse(cfgRaw);
+      await window.fbSalvarDoc(usuarioLogado.uid, cfg, "config", "geral");
+      migrados++;
+    }
+
+    // Cores
+    const coresRaw = localStorage.getItem(`financa_cores_${raw}`);
+    if (coresRaw) {
+      const cores = JSON.parse(coresRaw);
+      await window.fbSalvarDoc(usuarioLogado.uid, cores, "cores", "geral");
+      migrados++;
+    }
+
+    toast(`Migração iniciada. ${migrados} itens enviados.`, "success");
+    setStatusCloud("online", "Sincronizado");
+
+    // Recarrega
+    setTimeout(() => window.location.reload(), 1500);
+  } catch (err) {
+    console.error(err);
+    toast("Erro na migração", "error");
+    setStatusCloud("offline", "Erro");
+  }
+}
+
+async function sincronizarManual() {
+  if (!usuarioLogado) return;
+  try {
+    setStatusCloud("syncing", "Sincronizando…");
+    await iniciarSessao({ uid: usuarioLogado.uid, email: usuarioLogado.email, displayName: usuarioLogado.nome });
+    toast("Sincronizado!", "success");
+  } catch (e) {
+    toast("Erro ao sincronizar", "error");
+  }
 }
 
 /* =========================================================
@@ -1130,5 +1259,34 @@ document.addEventListener("DOMContentLoaded", () => {
   const campoData = $("data");
   if (campoData) campoData.value = dataHoje();
 
-  verificarLogin();
+  // Escuta mudanças de autenticação
+  whenFirebaseReady(() => {
+    window.fbAoMudarUsuario((user) => {
+      if (user) {
+        iniciarSessao(user);
+      } else {
+        usuarioLogado = null;
+        mostrarTela("telaLogin");
+        setStatusCloud("offline", "Desconectado");
+      }
+    });
+  });
 });
+
+/* =========================================================
+   EXPOR FUNÇÕES GLOBAIS
+========================================================= */
+
+window.abrirModalEditar = abrirModalEditar;
+window.removerTransacao = removerTransacao;
+window.filtrarBeneficio = filtrarBeneficio;
+window.filtrarBancoCredito = filtrarBancoCredito;
+window.abrirConfiguracoes = abrirConfiguracoes;
+window.abrirPersonalizacaoCores = abrirPersonalizacaoCores;
+window.removerItemConfig = removerItemConfig;
+window.adicionarItemConfig = adicionarItemConfig;
+window.adicionarSugestao = adicionarSugestao;
+window.toggleFiltro = toggleFiltro;
+window.mostrarTela = mostrarTela;
+window.migrarDadosLocalStorage = migrarDadosLocalStorage;
+window.sincronizarManual = sincronizarManual;
