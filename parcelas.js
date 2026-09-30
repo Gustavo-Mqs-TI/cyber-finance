@@ -1,5 +1,5 @@
 /* =========================================================
-   FINANÇA — Módulo Parcelas
+   FINANÇA — Módulo Parcelas (Firebase)
 ========================================================= */
 
 (function () {
@@ -7,11 +7,6 @@
 
   let parcelas = [];
   let parcelasInicializado = false;
-
-  function getStorageKey() {
-    if (window.usuarioLogado) return `financa_parcelas_${window.usuarioLogado.id}`;
-    return "financa_parcelas_anon";
-  }
 
   function money(v) {
     return (Number(v) || 0).toLocaleString("pt-BR", {
@@ -50,13 +45,37 @@
     return `${ty}-${String(nm + 1).padStart(2, "0")}-${String(fd).padStart(2, "0")}`;
   }
 
-  function salvar() { try { localStorage.setItem(getStorageKey(), JSON.stringify(parcelas)); } catch (e) {} }
-  function carregar() {
+  /* =========================================================
+     FIRESTORE
+  ========================================================= */
+
+  async function carregarDoFB() {
+    if (!window.usuarioLogado) return [];
     try {
-      const raw = localStorage.getItem(getStorageKey());
-      parcelas = raw ? JSON.parse(raw) : [];
-    } catch (e) { parcelas = []; }
+      const arr = await window.fbCarregarColecao(window.usuarioLogado.uid, "parcelas");
+      return arr || [];
+    } catch (e) { return []; }
   }
+
+  async function salvarNoFB(item) {
+    if (!window.usuarioLogado) return null;
+    try {
+      const dados = { ...item };
+      delete dados._fbId;
+      return await window.fbAdicionarItem(window.usuarioLogado.uid, "parcelas", dados);
+    } catch (e) { return null; }
+  }
+
+  async function excluirNoFB(fbId) {
+    if (!window.usuarioLogado || !fbId) return;
+    try {
+      await window.fbExcluirItem(window.usuarioLogado.uid, "parcelas", fbId);
+    } catch (e) {}
+  }
+
+  /* =========================================================
+     CÁLCULOS
+  ========================================================= */
 
   function gerarParcelasCompra(c) {
     const lista = [];
@@ -115,6 +134,10 @@
     });
     return r;
   }
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
 
   function renderResumo() {
     const mes = today().substring(0, 7);
@@ -189,6 +212,10 @@
 
   function renderTudo() { renderResumo(); renderTabela(); }
 
+  /* =========================================================
+     FORMULÁRIO
+  ========================================================= */
+
   function preencherSelects() {
     const bancos = (window.configUsuario && window.configUsuario.bancos) || [];
     const sel = document.getElementById("parcelaBanco");
@@ -222,31 +249,45 @@
     if (elF) elF.value = "";
   }
 
-  function excluir(idC) {
+  async function excluir(idC) {
     const c = parcelas.find((p) => p.id === idC);
     if (!c) return;
     if (!confirm(`Excluir "${c.descricao}"? As parcelas futuras serão removidas.`)) return;
+
+    if (c._fbId) await excluirNoFB(c._fbId);
     parcelas = parcelas.filter((p) => p.id !== idC);
-    salvar();
     toastSafe("Compra parcelada excluída", "info");
     renderTudo();
     if (typeof window.renderFaturaCards === "function") window.renderFaturaCards();
   }
 
-  function iniciar() {
-    if (parcelasInicializado) { carregar(); preencherSelects(); renderTudo(); return; }
+  /* =========================================================
+     INICIALIZAÇÃO
+  ========================================================= */
+
+  async function iniciar() {
+    if (parcelasInicializado) {
+      parcelas = await carregarDoFB();
+      preencherSelects();
+      renderTudo();
+      return;
+    }
     parcelasInicializado = true;
-    carregar();
+
+    parcelas = await carregarDoFB();
     preencherSelects();
+
     const d = document.getElementById("parcelaData");
     if (d) d.value = today();
+
     ["parcelaValor", "parcelaNumero", "parcelaData"].forEach((idC) => {
       const el = document.getElementById(idC);
       if (el) { el.addEventListener("input", camposAuto); el.addEventListener("change", camposAuto); }
     });
+
     const form = document.getElementById("formParcela");
     if (form) {
-      form.addEventListener("submit", (e) => {
+      form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const d_ = document.getElementById("parcelaDescricao").value.trim();
         const vT = parseFloat(document.getElementById("parcelaValor").value);
@@ -257,25 +298,35 @@
         if (!d_ || !vT || !nP || !b || !dp) { toastSafe("Preencha todos os campos obrigatórios", "error"); return; }
         if (vT <= 0) { toastSafe("Valor deve ser maior que zero", "error"); return; }
         if (nP < 2 || nP > 48) { toastSafe("Nº de parcelas entre 2 e 48", "error"); return; }
-        parcelas.push({
+
+        const nova = {
           id: id(), descricao: d_, valorTotal: vT, numeroParcelas: nP,
           banco: b, dataPrimeira: dp, categoria: cat, criadoEm: Date.now(),
-        });
-        salvar();
+        };
+
+        const fbId = await salvarNoFB(nova);
+        nova._fbId = fbId;
+        parcelas.push(nova);
+
         resetarForm();
         toastSafe("Compra parcelada adicionada!", "success");
         renderTudo();
         if (typeof window.renderFaturaCards === "function") window.renderFaturaCards();
       });
     }
+
     renderTudo();
   }
 
   document.addEventListener("click", (e) => {
     const btn = e.target.closest('.nav-item[data-aba="parcelas"]');
-    if (btn) setTimeout(() => {
-      if (!parcelasInicializado) iniciar();
-      else { preencherSelects(); renderTudo(); }
+    if (btn) setTimeout(async () => {
+      if (!parcelasInicializado) await iniciar();
+      else {
+        parcelas = await carregarDoFB();
+        preencherSelects();
+        renderTudo();
+      }
     }, 50);
   });
 
