@@ -15,11 +15,8 @@
     });
   }
 
-  function today() { return new Date().toISOString().split("T")[0]; }
-
   function toastSafe(m, t) { if (typeof window.toast === "function") window.toast(m, t || "info"); }
 
-  /* Cores do tema (lidas do CSS) */
   function cssVar(name, fallback) {
     const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     return v || fallback;
@@ -29,7 +26,6 @@
   function getMutedColor() { return cssVar("--text-muted", "#94a3b8"); }
   function getGridColor() { return cssVar("--border", "rgba(148,163,184,.1)"); }
 
-  /* Paleta para categorias */
   const PALETA = [
     "#6366f1", "#10b981", "#ef4444", "#f59e0b", "#8b5cf6",
     "#ec4899", "#14b8a6", "#06b6d4", "#f97316", "#84cc16",
@@ -38,8 +34,7 @@
 
   function getPeriodoPadrao() {
     const hoje = new Date();
-    const y = hoje.getFullYear();
-    const m = hoje.getMonth();
+    const y = hoje.getFullYear(), m = hoje.getMonth();
     const inicio = `${y}-${String(m + 1).padStart(2, "0")}-01`;
     const last = new Date(y, m + 1, 0).getDate();
     const fim = `${y}-${String(m + 1).padStart(2, "0")}-${String(last).padStart(2, "0")}`;
@@ -53,12 +48,12 @@
     return getPeriodoPadrao();
   }
 
-  /* Filtra transações pelo período */
   function transNoPeriodo(inicio, fim) {
     return (window.transacoes || []).filter((t) => t.data >= inicio && t.data <= fim);
   }
 
   /* ============ MÉTRICAS ============ */
+
   function renderMetricas() {
     const { inicio, fim } = getPeriodo();
     const trans = transNoPeriodo(inicio, fim);
@@ -98,6 +93,7 @@
   }
 
   /* ============ GRÁFICO: CATEGORIAS ============ */
+
   function chartCategorias() {
     const { inicio, fim } = getPeriodo();
     const trans = transNoPeriodo(inicio, fim).filter((t) => t.tipo === "saida");
@@ -131,17 +127,14 @@
         maintainAspectRatio: false,
         plugins: {
           legend: { position: "right", labels: { color: getTextColor(), font: { size: 11 } } },
-          tooltip: {
-            callbacks: {
-              label: (ctx) => `${ctx.label}: ${money(ctx.raw)}`,
-            },
-          },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${money(ctx.raw)}` } },
         },
       },
     });
   }
 
   /* ============ GRÁFICO: BANCOS ============ */
+
   function chartBancos() {
     const { inicio, fim } = getPeriodo();
     const trans = transNoPeriodo(inicio, fim).filter((t) => t.tipo === "saida");
@@ -171,18 +164,10 @@
         }],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: "y",
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: (ctx) => money(ctx.raw) } },
-        },
+        responsive: true, maintainAspectRatio: false, indexAxis: "y",
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => money(ctx.raw) } } },
         scales: {
-          x: {
-            ticks: { color: getMutedColor(), callback: (v) => "R$ " + v },
-            grid: { color: getGridColor() },
-          },
+          x: { ticks: { color: getMutedColor(), callback: (v) => "R$ " + v }, grid: { color: getGridColor() } },
           y: { ticks: { color: getTextColor() }, grid: { display: false } },
         },
       },
@@ -190,6 +175,7 @@
   }
 
   /* ============ GRÁFICO: EVOLUÇÃO MENSAL ============ */
+
   function chartEvolucao() {
     const hoje = new Date();
     const meses = [];
@@ -221,25 +207,12 @@
       data: {
         labels: meses.map((m) => m.label),
         datasets: [
-          {
-            label: "Entradas",
-            data: entradas,
-            borderColor: "#10b981",
-            backgroundColor: "rgba(16,185,129,0.15)",
-            fill: true, tension: 0.35, borderWidth: 2,
-          },
-          {
-            label: "Saídas",
-            data: saidas,
-            borderColor: "#ef4444",
-            backgroundColor: "rgba(239,68,68,0.15)",
-            fill: true, tension: 0.35, borderWidth: 2,
-          },
+          { label: "Entradas", data: entradas, borderColor: "#10b981", backgroundColor: "rgba(16,185,129,0.15)", fill: true, tension: 0.35, borderWidth: 2 },
+          { label: "Saídas", data: saidas, borderColor: "#ef4444", backgroundColor: "rgba(239,68,68,0.15)", fill: true, tension: 0.35, borderWidth: 2 },
         ],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         plugins: {
           legend: { labels: { color: getTextColor() } },
           tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${money(ctx.raw)}` } },
@@ -253,6 +226,7 @@
   }
 
   /* ============ GRÁFICO: CRIPTO ============ */
+
   function chartCripto() {
     if (!window.criptoCalcularPosicoes || !window.criptoGetCotacoes) return;
     const pos = window.criptoCalcularPosicoes();
@@ -292,8 +266,7 @@
         }],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         plugins: {
           legend: { position: "right", labels: { color: getTextColor() } },
           tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${money(ctx.raw)}` } },
@@ -303,6 +276,7 @@
   }
 
   /* ============ GRÁFICO: FATURA ============ */
+
   function chartFatura() {
     const { inicio, fim } = getPeriodo();
     const trans = transNoPeriodo(inicio, fim).filter((t) => t.modalidade === "Crédito" && t.tipo === "saida");
@@ -332,12 +306,8 @@
         }],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: (ctx) => money(ctx.raw) } },
-        },
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => money(ctx.raw) } } },
         scales: {
           x: { ticks: { color: getTextColor() }, grid: { display: false } },
           y: { ticks: { color: getMutedColor(), callback: (v) => "R$ " + v }, grid: { color: getGridColor() } },
@@ -347,6 +317,7 @@
   }
 
   /* ============ GRÁFICO: BENEFÍCIOS ============ */
+
   function chartBeneficios() {
     const beneficios = (window.configUsuario && window.configUsuario.beneficios) || [];
     const trans = window.transacoes || [];
@@ -390,12 +361,8 @@
         }],
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: { label: (ctx) => money(ctx.raw) } },
-        },
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => money(ctx.raw) } } },
         scales: {
           x: { ticks: { color: getTextColor() }, grid: { display: false } },
           y: { ticks: { color: getMutedColor(), callback: (v) => "R$ " + v }, grid: { color: getGridColor() } },
@@ -405,6 +372,7 @@
   }
 
   /* ============ RENDER GERAL ============ */
+
   function renderTudo() {
     if (typeof Chart === "undefined") {
       console.warn("Chart.js não carregado");
@@ -420,6 +388,7 @@
   }
 
   /* ============ BOTÕES DE PERÍODO ============ */
+
   function setPeriodo(inicio, fim) {
     const di = document.getElementById("graficoDataInicio");
     const df = document.getElementById("graficoDataFim");
@@ -452,6 +421,7 @@
   }
 
   /* ============ INICIALIZAÇÃO ============ */
+
   function iniciar() {
     if (graficosInicializado) { renderTudo(); return; }
     graficosInicializado = true;
