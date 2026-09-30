@@ -1,5 +1,5 @@
 /* =========================================================
-   FINANÇA — Módulo Criptos
+   FINANÇA — Módulo Criptos (Firebase)
 ========================================================= */
 
 (function () {
@@ -18,16 +18,6 @@
   let criptoCotacoes = {};
   let criptoCores = {};
   let criptoInicializado = false;
-
-  function getStorageKey() {
-    if (window.usuarioLogado) return `financa_criptos_${window.usuarioLogado.id}`;
-    return "financa_criptos_anon";
-  }
-
-  function getCoresKey() {
-    if (window.usuarioLogado) return `financa_criptos_cores_${window.usuarioLogado.id}`;
-    return "financa_criptos_cores_anon";
-  }
 
   const CRIPTO_CORES_PADRAO = [
     "#f7931a", "#627eea", "#14f195", "#23292f", "#0033ad",
@@ -92,20 +82,62 @@
     return `${d}/${m}/${y}`;
   }
 
-  function salvar() { try { localStorage.setItem(getStorageKey(), JSON.stringify(criptoOperacoes)); } catch (e) {} }
-  function carregar() {
+  /* =========================================================
+     PERSISTÊNCIA — FIRESTORE
+  ========================================================= */
+
+  async function salvarCriptoNoFB(op) {
+    if (!window.usuarioLogado) return null;
     try {
-      const raw = localStorage.getItem(getStorageKey());
-      criptoOperacoes = raw ? JSON.parse(raw) : [];
-    } catch (e) { criptoOperacoes = []; }
+      const dados = { ...op };
+      delete dados._fbId;
+      const fbId = await window.fbAdicionarItem(window.usuarioLogado.uid, "criptos", dados);
+      return fbId;
+    } catch (e) {
+      console.warn("Erro ao salvar cripto:", e);
+      return null;
+    }
   }
-  function salvarCores() { try { localStorage.setItem(getCoresKey(), JSON.stringify(criptoCores)); } catch (e) {} }
-  function carregarCores() {
+
+  async function excluirCriptoNoFB(fbId) {
+    if (!window.usuarioLogado || !fbId) return;
     try {
-      const raw = localStorage.getItem(getCoresKey());
-      criptoCores = raw ? JSON.parse(raw) : {};
-    } catch (e) { criptoCores = {}; }
+      await window.fbExcluirItem(window.usuarioLogado.uid, "criptos", fbId);
+    } catch (e) {
+      console.warn("Erro ao excluir cripto:", e);
+    }
   }
+
+  async function carregarCriptosDoFB() {
+    if (!window.usuarioLogado) return [];
+    try {
+      const arr = await window.fbCarregarColecao(window.usuarioLogado.uid, "criptos");
+      return arr || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async function salvarCoresCriptoNoFB() {
+    if (!window.usuarioLogado) return;
+    try {
+      await window.fbSalvarDoc(window.usuarioLogado.uid, criptoCores, "criptosCores", "geral");
+    } catch (e) {}
+  }
+
+  async function carregarCoresCriptoDoFB() {
+    if (!window.usuarioLogado) return;
+    try {
+      const cores = await window.fbCarregarDoc(window.usuarioLogado.uid, "criptosCores", "geral");
+      criptoCores = cores || {};
+    } catch (e) {
+      criptoCores = {};
+    }
+  }
+
+  /* =========================================================
+     CÁLCULOS
+  ========================================================= */
 
   function calcularPosicoes() {
     const pos = {};
@@ -155,6 +187,10 @@
     return q;
   }
 
+  /* =========================================================
+     COTAÇÕES
+  ========================================================= */
+
   async function buscarCotacoes() {
     const criptos = [...new Set(criptoOperacoes.map((o) => o.cripto))];
     const ids = criptos.map((c) => CRIPTO_MAP[c]).filter(Boolean);
@@ -177,6 +213,10 @@
     }
   }
 
+  /* =========================================================
+     RENDER — RESUMO
+  ========================================================= */
+
   function atualizarResumo() {
     const pos = calcularPosicoes();
     let inv = 0, atual = 0;
@@ -196,6 +236,10 @@
     if (elL) { elL.textContent = money(lucro); elL.style.color = lucro >= 0 ? "var(--success)" : "var(--danger)"; }
     if (elR) { elR.textContent = pctFmt(rent); elR.style.color = rent >= 0 ? "var(--success)" : "var(--danger)"; }
   }
+
+  /* =========================================================
+     RENDER — CARDS
+  ========================================================= */
 
   function renderCards() {
     const container = document.getElementById("criptoCards");
@@ -225,6 +269,10 @@
       `;
     }).join("");
   }
+
+  /* =========================================================
+     RENDER — TABELA
+  ========================================================= */
 
   function renderTabela(filtro) {
     const tbody = document.getElementById("criptoLista");
@@ -290,6 +338,10 @@
     }).join("");
   }
 
+  /* =========================================================
+     SELECTS / FILTROS
+  ========================================================= */
+
   function atualizarSelectMoedas() {
     const sel = document.getElementById("filtroCriptoMoeda");
     if (!sel) return;
@@ -333,6 +385,10 @@
     if (df) df.value = "";
   }
 
+  /* =========================================================
+     FORMULÁRIO
+  ========================================================= */
+
   function camposAuto() {
     const q = parseFloat(document.getElementById("criptoQuantidade")?.value) || 0;
     const b = parseFloat(document.getElementById("criptoValorBruto")?.value) || 0;
@@ -362,13 +418,20 @@
     if (elP) elP.value = "";
   }
 
-  function excluir(id) {
+  async function excluir(id) {
     if (!confirm("Deseja realmente excluir esta operação?")) return;
+    const op = criptoOperacoes.find((o) => o.id === id);
+    if (!op) return;
+
+    if (op._fbId) await excluirCriptoNoFB(op._fbId);
     criptoOperacoes = criptoOperacoes.filter((o) => o.id !== id);
-    salvar();
     toastSafe("Operação excluída", "info");
     atualizarTudo();
   }
+
+  /* =========================================================
+     EXPORTAR / IMPORTAR (local, igual antes)
+  ========================================================= */
 
   function exportarJSON() {
     if (criptoOperacoes.length === 0) { toastSafe("Nada para exportar", "warning"); return; }
@@ -420,33 +483,43 @@
     toastSafe("CSV exportado!", "success");
   }
 
-  function importarJSON(file) {
+  async function importarJSON(file) {
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const dados = JSON.parse(e.target.result);
         if (!Array.isArray(dados)) throw new Error("Formato inválido");
-        if (!confirm(`Importar ${dados.length} operações? Substituirá os dados atuais.`)) return;
-        criptoOperacoes = dados.map((o) => ({
-          id: o.id || cid(),
-          data: o.data, tipo: o.tipo,
-          cripto: String(o.cripto).toUpperCase(),
-          quantidade: Number(o.quantidade) || 0,
-          valorBruto: Number(o.valorBruto) || 0,
-          taxa: Number(o.taxa) || 0,
-          valorLiquido: Number(o.valorLiquido) || 0,
-          observacao: o.observacao || "",
-          criadoEm: o.criadoEm || Date.now(),
-        })).filter((o) => o.data && o.cripto && o.quantidade > 0);
-        salvar();
+        if (!confirm(`Importar ${dados.length} operações? Serão adicionadas ao Firestore.`)) return;
+
+        for (const item of dados) {
+          const nova = {
+            id: item.id || cid(),
+            data: item.data, tipo: item.tipo,
+            cripto: String(item.cripto).toUpperCase(),
+            quantidade: Number(item.quantidade) || 0,
+            valorBruto: Number(item.valorBruto) || 0,
+            taxa: Number(item.taxa) || 0,
+            valorLiquido: Number(item.valorLiquido) || 0,
+            observacao: item.observacao || "",
+            criadoEm: item.criadoEm || Date.now(),
+          };
+          const fbId = await salvarCriptoNoFB(nova);
+          nova._fbId = fbId;
+          criptoOperacoes.push(nova);
+        }
         atualizarTudo();
-        toastSafe(`${criptoOperacoes.length} operações importadas!`, "success");
+        toastSafe(`${dados.length} operações importadas!`, "success");
       } catch (err) {
+        console.error(err);
         toastSafe("Erro ao importar arquivo", "error");
       }
     };
     reader.readAsText(file);
   }
+
+  /* =========================================================
+     ATUALIZAÇÃO
+  ========================================================= */
 
   function atualizarTudo() {
     atualizarResumo();
@@ -459,6 +532,10 @@
     await buscarCotacoes();
     atualizarTudo();
   }
+
+  /* =========================================================
+     MODAL DE CORES
+  ========================================================= */
 
   function renderListaCores() {
     const container = document.getElementById("listaCoresCriptos");
@@ -476,23 +553,26 @@
     `).join("");
   }
 
-  function aplicarCoresDoModal() {
+  async function aplicarCoresDoModal() {
     document.querySelectorAll(".cor-cripto-input").forEach((inp) => {
       criptoCores[inp.dataset.nome] = inp.value;
     });
-    salvarCores();
+    await salvarCoresCriptoNoFB();
     renderCards();
   }
 
-  function iniciar() {
+  /* =========================================================
+     INICIALIZAÇÃO
+  ========================================================= */
+
+  async function iniciar() {
     if (criptoInicializado) {
-      carregar(); carregarCores();
-      atualizarTudo();
-      atualizarCotacoesERender();
+      await recarregar();
       return;
     }
     criptoInicializado = true;
-    carregar(); carregarCores();
+
+    await carregar();
 
     const d = document.getElementById("criptoData");
     if (d) d.value = window.dataHoje ? window.dataHoje() : new Date().toISOString().split("T")[0];
@@ -512,7 +592,7 @@
 
     const form = document.getElementById("formCripto");
     if (form) {
-      form.addEventListener("submit", (e) => {
+      form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const data = document.getElementById("criptoData").value;
         const tipo = document.getElementById("criptoTipo").value;
@@ -533,12 +613,16 @@
         }
 
         const liq = tipo === "venda" ? b - t : b + t;
-        criptoOperacoes.push({
+        const nova = {
           id: cid(), data, tipo, cripto, quantidade: q,
           valorBruto: b, taxa: t, valorLiquido: liq, observacao: obs,
           criadoEm: Date.now(),
-        });
-        salvar();
+        };
+
+        const fbId = await salvarCriptoNoFB(nova);
+        nova._fbId = fbId;
+        criptoOperacoes.push(nova);
+
         resetarForm();
         toastSafe("Operação adicionada!", "success");
         atualizarTudo();
@@ -583,11 +667,22 @@
     }, 120000);
   }
 
+  async function carregar() {
+    criptoOperacoes = await carregarCriptosDoFB();
+    await carregarCoresCriptoDoFB();
+  }
+
+  async function recarregar() {
+    await carregar();
+    atualizarTudo();
+    await atualizarCotacoesERender();
+  }
+
   document.addEventListener("click", (e) => {
     const btn = e.target.closest('.nav-item[data-aba="criptos"]');
     if (btn) setTimeout(() => {
       if (!criptoInicializado) iniciar();
-      else atualizarCotacoesERender();
+      else recarregar();
     }, 50);
   });
 
