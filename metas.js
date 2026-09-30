@@ -1,5 +1,5 @@
 /* =========================================================
-   FINANÇA — Módulo Metas
+   FINANÇA — Módulo Metas (Firebase)
 ========================================================= */
 
 (function () {
@@ -8,19 +8,12 @@
   let metas = [];
   let metasInicializado = false;
 
-  function getStorageKey() {
-    if (window.usuarioLogado) return `financa_metas_${window.usuarioLogado.id}`;
-    return "financa_metas_anon";
-  }
-
   function money(v) {
     return (Number(v) || 0).toLocaleString("pt-BR", {
       style: "currency", currency: "BRL",
       minimumFractionDigits: 2, maximumFractionDigits: 2,
     });
   }
-
-  function today() { return new Date().toISOString().split("T")[0]; }
 
   function id() { return Date.now() + Math.floor(Math.random() * 1000); }
 
@@ -32,23 +25,45 @@
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
-  function salvar() { try { localStorage.setItem(getStorageKey(), JSON.stringify(metas)); } catch (e) {} }
-  function carregar() {
+  /* =========================================================
+     FIRESTORE
+  ========================================================= */
+
+  async function carregarDoFB() {
+    if (!window.usuarioLogado) return [];
     try {
-      const raw = localStorage.getItem(getStorageKey());
-      metas = raw ? JSON.parse(raw) : [];
-    } catch (e) { metas = []; }
+      const arr = await window.fbCarregarColecao(window.usuarioLogado.uid, "metas");
+      return arr || [];
+    } catch (e) { return []; }
   }
 
-  /* Retorna as datas (início e fim) de uma meta em função do período */
+  async function salvarNoFB(item) {
+    if (!window.usuarioLogado) return null;
+    try {
+      const dados = { ...item };
+      delete dados._fbId;
+      return await window.fbAdicionarItem(window.usuarioLogado.uid, "metas", dados);
+    } catch (e) { return null; }
+  }
+
+  async function excluirNoFB(fbId) {
+    if (!window.usuarioLogado || !fbId) return;
+    try {
+      await window.fbExcluirItem(window.usuarioLogado.uid, "metas", fbId);
+    } catch (e) {}
+  }
+
+  /* =========================================================
+     CÁLCULOS
+  ========================================================= */
+
   function getPeriodo(meta) {
     const hoje = new Date();
     if (meta.periodo === "personalizado") {
       return { inicio: meta.dataInicio, fim: meta.dataFim };
     }
     if (meta.periodo === "mensal") {
-      const y = hoje.getFullYear();
-      const m = hoje.getMonth();
+      const y = hoje.getFullYear(), m = hoje.getMonth();
       const inicio = `${y}-${String(m + 1).padStart(2, "0")}-01`;
       const last = new Date(y, m + 1, 0).getDate();
       const fim = `${y}-${String(m + 1).padStart(2, "0")}-${String(last).padStart(2, "0")}`;
@@ -61,7 +76,6 @@
     return { inicio: "1900-01-01", fim: "2100-12-31" };
   }
 
-  /* Calcula o progresso de uma meta */
   function calcularProgresso(meta) {
     const { inicio, fim } = getPeriodo(meta);
     const trans = window.transacoes || [];
@@ -99,12 +113,18 @@
     return { atual, alvo, pct, inicio, fim };
   }
 
+  /* =========================================================
+     RENDER
+  ========================================================= */
+
   function renderCards() {
     const container = document.getElementById("metasContainer");
     if (!container) return;
 
     if (metas.length === 0) {
       container.innerHTML = `<div class="empty-cards">Nenhuma meta cadastrada ainda. Crie uma acima.</div>`;
+      const cont = document.getElementById("metasContador");
+      if (cont) cont.textContent = "0 metas";
       return;
     }
 
@@ -159,9 +179,7 @@
             <div class="progress-bar"><div class="progress-bar-fill ${cor}" style="width:${pctShow}%"></div></div>
           </div>
 
-          <div style="font-size:11px;color:var(--text-dim);">
-            ${inicio} até ${fim}
-          </div>
+          <div style="font-size:11px;color:var(--text-dim);">${inicio} até ${fim}</div>
         </div>
       `;
     }).join("");
@@ -169,6 +187,10 @@
     const cont = document.getElementById("metasContador");
     if (cont) cont.textContent = `${metas.length} ${metas.length === 1 ? "meta" : "metas"}`;
   }
+
+  /* =========================================================
+     FORMULÁRIO
+  ========================================================= */
 
   function preencherSelects() {
     const mods = [
@@ -203,20 +225,30 @@
     atualizarVisibilidadeCampos();
   }
 
-  function excluir(idM) {
+  async function excluir(idM) {
     const m = metas.find((x) => x.id === idM);
     if (!m) return;
     if (!confirm(`Excluir a meta "${m.descricao}"?`)) return;
+    if (m._fbId) await excluirNoFB(m._fbId);
     metas = metas.filter((x) => x.id !== idM);
-    salvar();
     toastSafe("Meta excluída", "info");
     renderCards();
   }
 
-  function iniciar() {
-    if (metasInicializado) { carregar(); preencherSelects(); renderCards(); return; }
+  /* =========================================================
+     INICIALIZAÇÃO
+  ========================================================= */
+
+  async function iniciar() {
+    if (metasInicializado) {
+      metas = await carregarDoFB();
+      preencherSelects();
+      renderCards();
+      return;
+    }
     metasInicializado = true;
-    carregar();
+
+    metas = await carregarDoFB();
     preencherSelects();
 
     const selTipo = document.getElementById("metaTipo");
@@ -227,7 +259,7 @@
 
     const form = document.getElementById("formMeta");
     if (form) {
-      form.addEventListener("submit", (e) => {
+      form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const d = document.getElementById("metaDescricao").value.trim();
         const t = document.getElementById("metaTipo").value;
@@ -243,30 +275,41 @@
         if (p === "personalizado" && (!dI || !dF)) { toastSafe("Informe as datas início e fim", "error"); return; }
         if (p === "personalizado" && dI > dF) { toastSafe("Data início maior que fim", "error"); return; }
 
-        metas.push({
+        const nova = {
           id: id(), descricao: d, tipo: t, valor: v, periodo: p,
           categoria: t === "gasto" ? cat : null,
           cripto: t === "cripto" ? cri : null,
           dataInicio: p === "personalizado" ? dI : null,
           dataFim: p === "personalizado" ? dF : null,
           criadoEm: Date.now(),
-        });
-        salvar();
+        };
+
+        const fbId = await salvarNoFB(nova);
+        nova._fbId = fbId;
+        metas.push(nova);
+
         resetarForm();
         toastSafe("Meta criada!", "success");
         renderCards();
       });
     }
+
     renderCards();
   }
 
-  function renderTudo() { preencherSelects(); renderCards(); }
+  async function renderTudo() {
+    preencherSelects();
+    renderCards();
+  }
 
   document.addEventListener("click", (e) => {
     const btn = e.target.closest('.nav-item[data-aba="metas"]');
-    if (btn) setTimeout(() => {
-      if (!metasInicializado) iniciar();
-      else renderTudo();
+    if (btn) setTimeout(async () => {
+      if (!metasInicializado) await iniciar();
+      else {
+        metas = await carregarDoFB();
+        renderTudo();
+      }
     }, 50);
   });
 
