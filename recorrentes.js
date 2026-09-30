@@ -1,5 +1,5 @@
 /* =========================================================
-   FINANÇA — Módulo Recorrentes
+   FINANÇA — Módulo Recorrentes (Firebase)
 ========================================================= */
 
 (function () {
@@ -7,11 +7,6 @@
 
   let recorrentes = [];
   let recorrentesInicializado = false;
-
-  function getStorageKey() {
-    if (window.usuarioLogado) return `financa_recorrentes_${window.usuarioLogado.id}`;
-    return "financa_recorrentes_anon";
-  }
 
   function money(v) {
     return (Number(v) || 0).toLocaleString("pt-BR", {
@@ -36,13 +31,46 @@
     return r.valor;
   }
 
-  function salvar() { try { localStorage.setItem(getStorageKey(), JSON.stringify(recorrentes)); } catch (e) {} }
-  function carregar() {
+  /* =========================================================
+     FIRESTORE
+  ========================================================= */
+
+  async function carregarDoFB() {
+    if (!window.usuarioLogado) return [];
     try {
-      const raw = localStorage.getItem(getStorageKey());
-      recorrentes = raw ? JSON.parse(raw) : [];
-    } catch (e) { recorrentes = []; }
+      const arr = await window.fbCarregarColecao(window.usuarioLogado.uid, "recorrentes");
+      return arr || [];
+    } catch (e) { return []; }
   }
+
+  async function salvarNoFB(item) {
+    if (!window.usuarioLogado) return null;
+    try {
+      const dados = { ...item };
+      delete dados._fbId;
+      return await window.fbAdicionarItem(window.usuarioLogado.uid, "recorrentes", dados);
+    } catch (e) { return null; }
+  }
+
+  async function atualizarNoFB(fbId, dados) {
+    if (!window.usuarioLogado || !fbId) return;
+    try {
+      const d = { ...dados };
+      delete d._fbId;
+      await window.fbAtualizarItem(window.usuarioLogado.uid, "recorrentes", fbId, d);
+    } catch (e) {}
+  }
+
+  async function excluirNoFB(fbId) {
+    if (!window.usuarioLogado || !fbId) return;
+    try {
+      await window.fbExcluirItem(window.usuarioLogado.uid, "recorrentes", fbId);
+    } catch (e) {}
+  }
+
+  /* =========================================================
+     CÁLCULOS
+  ========================================================= */
 
   function totalSaidasMensal() {
     return recorrentes.filter((r) => r.tipo === "saida" && r.ativo !== false)
@@ -65,6 +93,10 @@
       return false;
     });
   }
+
+  /* =========================================================
+     RENDER
+  ========================================================= */
 
   function renderResumo() {
     const s = totalSaidasMensal();
@@ -127,6 +159,10 @@
 
   function renderTudo() { renderResumo(); renderTabela(); }
 
+  /* =========================================================
+     FORMULÁRIO
+  ========================================================= */
+
   function preencherSelects() {
     const bancos = (window.configUsuario && window.configUsuario.bancos) || [];
     const mods = [
@@ -154,33 +190,44 @@
     if (f) f.reset();
   }
 
-  function excluir(idR) {
+  async function excluir(idR) {
     const r = recorrentes.find((x) => x.id === idR);
     if (!r) return;
     if (!confirm(`Excluir "${r.descricao}"?`)) return;
+    if (r._fbId) await excluirNoFB(r._fbId);
     recorrentes = recorrentes.filter((x) => x.id !== idR);
-    salvar();
     toastSafe("Recorrência excluída", "info");
     renderTudo();
   }
 
-  function toggle(idR) {
+  async function toggle(idR) {
     const r = recorrentes.find((x) => x.id === idR);
     if (!r) return;
     r.ativo = r.ativo === false ? true : false;
-    salvar();
+    if (r._fbId) await atualizarNoFB(r._fbId, r);
     toastSafe(r.ativo ? "Recorrência ativada" : "Recorrência desativada", "info");
     renderTudo();
   }
 
-  function iniciar() {
-    if (recorrentesInicializado) { carregar(); preencherSelects(); renderTudo(); return; }
+  /* =========================================================
+     INICIALIZAÇÃO
+  ========================================================= */
+
+  async function iniciar() {
+    if (recorrentesInicializado) {
+      recorrentes = await carregarDoFB();
+      preencherSelects();
+      renderTudo();
+      return;
+    }
     recorrentesInicializado = true;
-    carregar();
+
+    recorrentes = await carregarDoFB();
     preencherSelects();
+
     const form = document.getElementById("formRecorrente");
     if (form) {
-      form.addEventListener("submit", (e) => {
+      form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const d = document.getElementById("recorrenteDescricao").value.trim();
         const v = parseFloat(document.getElementById("recorrenteValor").value);
@@ -189,29 +236,40 @@
         const dia = parseInt(document.getElementById("recorrenteDia").value);
         const b = document.getElementById("recorrenteBanco").value;
         const m = document.getElementById("recorrenteModalidade").value;
+
         if (!d || !v || !t || !f) { toastSafe("Preencha todos os campos obrigatórios", "error"); return; }
         if (v <= 0) { toastSafe("Valor deve ser maior que zero", "error"); return; }
         if (f !== "semanal" && (!dia || dia < 1 || dia > 31)) { toastSafe("Dia entre 1 e 31", "error"); return; }
-        recorrentes.push({
+
+        const nova = {
           id: id(), descricao: d, valor: v, tipo: t, frequencia: f,
           dia: f === "semanal" ? null : dia,
           diaSemana: f === "semanal" ? 1 : null,
           banco: b, modalidade: m, ativo: true, criadoEm: Date.now(),
-        });
-        salvar();
+        };
+
+        const fbId = await salvarNoFB(nova);
+        nova._fbId = fbId;
+        recorrentes.push(nova);
+
         resetarForm();
         toastSafe("Recorrência adicionada!", "success");
         renderTudo();
       });
     }
+
     renderTudo();
   }
 
   document.addEventListener("click", (e) => {
     const btn = e.target.closest('.nav-item[data-aba="recorrentes"]');
-    if (btn) setTimeout(() => {
-      if (!recorrentesInicializado) iniciar();
-      else { preencherSelects(); renderTudo(); }
+    if (btn) setTimeout(async () => {
+      if (!recorrentesInicializado) await iniciar();
+      else {
+        recorrentes = await carregarDoFB();
+        preencherSelects();
+        renderTudo();
+      }
     }, 50);
   });
 
