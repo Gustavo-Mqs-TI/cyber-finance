@@ -220,7 +220,7 @@ $("formLogin").addEventListener("submit", async (e) => {
   }
 });
 
-$("formRegistro").addEventListener("submit", (e) => {
+$("formRegistro").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const nome = $("regNome").value.trim();
@@ -228,16 +228,44 @@ $("formRegistro").addEventListener("submit", (e) => {
   const senha = $("regSenha").value;
   const confirmar = $("regConfirmarSenha").value;
 
-  if (senha !== confirmar) { toast("As senhas não coincidem", "error"); return; }
-  if (senha.length < 6) { toast("A senha deve ter no mínimo 6 caracteres", "error"); return; }
-  if (usuarios.find((u) => u.email === email)) { toast("E-mail já cadastrado", "error"); return; }
+  if (!nome || !email || !senha || !confirmar) {
+    toast("Preencha todos os campos", "error");
+    return;
+  }
 
-  usuarios.push({ id: gerarId(), nome, email, senha });
-  salvarUsuarios();
+  if (senha !== confirmar) {
+    toast("As senhas não coincidem", "error");
+    return;
+  }
 
-  toast("Conta criada com sucesso!", "success");
-  $("formRegistro").reset();
-  mostrarTela("telaLogin");
+  if (senha.length < 6) {
+    toast("A senha deve ter no mínimo 6 caracteres", "error");
+    return;
+  }
+
+  try {
+    const user = await window.fbCadastrar(nome, email, senha);
+
+    console.log("Usuário criado no Firebase:", user);
+
+    toast("Conta criada com sucesso!", "success");
+
+    $("formRegistro").reset();
+    mostrarTela("telaLogin");
+
+  } catch (error) {
+    console.error("Erro no cadastro Firebase:", error);
+
+    if (error.code === "auth/email-already-in-use") {
+      toast("Este e-mail já está cadastrado", "error");
+    } else if (error.code === "auth/invalid-email") {
+      toast("E-mail inválido", "error");
+    } else if (error.code === "auth/weak-password") {
+      toast("A senha é muito fraca", "error");
+    } else {
+      toast("Não foi possível criar a conta", "error");
+    }
+  }
 });
 
 $("formRecuperar").addEventListener("submit", (e) => {
