@@ -52,9 +52,10 @@
       </form>
 
       <div class="auth-demo">
-        <div class="demo-label">Sincronizado na nuvem ☁️</div>
+        <div class="demo-label">Conta de demonstração</div>
         <div class="demo-creds">
-          <code>Acesse de qualquer dispositivo</code>
+          <code>demo@financeiro.com</code>
+          <code>123456</code>
         </div>
       </div>
 
@@ -268,900 +269,1100 @@
 </div>
 
 <!-- ========================================================
-     APP PRINCIPAL
+     TELA: APP PRINCIPAL  ← AGORA ENVOLVIDO EM .screen
 ========================================================= -->
-<div id="app" class="app">
+<div id="telaApp" class="screen">
+  <div id="app" class="app">
 
-  <aside class="sidebar">
+    <aside class="sidebar">
 
-    <div class="sidebar-brand">
-      <div class="brand-mark">₣</div>
-      <span class="brand-name">Finança</span>
-    </div>
-
-    <nav class="sidebar-nav">
-      <button class="nav-item active" data-aba="geral">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-        <span>Geral</span>
-      </button>
-      <button class="nav-item" data-aba="beneficios">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-        <span>Benefícios</span>
-      </button>
-      <button class="nav-item" data-aba="fatura">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        <span>Fatura</span>
-      </button>
-      <button class="nav-item" data-aba="criptos">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.5 8h4a2 2 0 0 1 0 4h-4zM9.5 12h4.5a2 2 0 0 1 0 4H9.5zM11 8v8M13 8v8"/></svg>
-        <span>Criptos</span>
-      </button>
-      <button class="nav-item" data-aba="parcelas">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
-        <span>Parcelas</span>
-      </button>
-      <button class="nav-item" data-aba="recorrentes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-        <span>Recorrentes</span>
-      </button>
-      <button class="nav-item" data-aba="metas">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-        <span>Metas</span>
-      </button>
-      <button class="nav-item" data-aba="graficos">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        <span>Gráficos</span>
-      </button>
-    </nav>
-
-    <div class="sidebar-footer">
-      <button class="nav-item" id="btnPerfilSide">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span>Perfil</span>
-      </button>
-      <button class="nav-item nav-item-danger" id="btnLogout">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        <span>Sair</span>
-      </button>
-    </div>
-
-  </aside>
-
-  <main class="content">
-
-    <header class="topbar">
-      <div class="topbar-left">
-        <h1 id="pageTitle">Visão geral</h1>
-        <p id="pageSubtitle" class="page-subtitle">Acompanhe suas finanças em tempo real</p>
+      <div class="sidebar-brand">
+        <div class="brand-mark">₣</div>
+        <span class="brand-name">Finança</span>
       </div>
 
-      <div class="topbar-right">
-        <span id="statusCloud" class="status-cloud" title="Status da sincronização">
-          <span class="dot"></span>
-          <span class="label">Conectando…</span>
-        </span>
-
-        <button class="icon-btn" id="btnCores" title="Personalizar cores">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-aba="geral">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          <span>Geral</span>
         </button>
-
-        <button class="icon-btn" id="btnTema" title="Alternar tema">
-          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <button class="nav-item" data-aba="beneficios">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          <span>Benefícios</span>
         </button>
-
-        <div class="user-chip" id="userChip">
-          <div class="user-avatar" id="userAvatar">U</div>
-          <div class="user-meta">
-            <span class="user-name" id="userNome">Usuário</span>
-            <span class="user-email" id="userEmail">email@exemplo.com</span>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- ============ ABA GERAL ============ -->
-    <section class="aba active" id="abaGeral">
-
-      <div class="metrics-grid">
-        <div class="metric-card" data-metric="entrada">
-          <div class="metric-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            Entradas
-          </div>
-          <div class="metric-value" id="totalEntrada">R$ 0,00</div>
-        </div>
-
-        <div class="metric-card" data-metric="saida">
-          <div class="metric-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-            Saídas
-          </div>
-          <div class="metric-value" id="totalSaida">R$ 0,00</div>
-        </div>
-
-        <div class="metric-card" data-metric="saldo">
-          <div class="metric-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            Saldo
-          </div>
-          <div class="metric-value" id="saldoFinal">R$ 0,00</div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h2>Novo lançamento</h2>
-            <p>Registre uma entrada ou saída</p>
-          </div>
-        </div>
-
-        <form id="formGasto" class="grid-form">
-          <div class="field field-span-2">
-            <label for="descricao">Descrição</label>
-            <input type="text" id="descricao" placeholder="Ex: Salário, Mercado..." required>
-          </div>
-
-          <div class="field">
-            <label for="valor">Valor</label>
-            <input type="number" id="valor" step="0.01" min="0" placeholder="0,00" required>
-          </div>
-
-          <div class="field">
-            <label for="tipo">Tipo</label>
-            <select id="tipo" required>
-              <option value="">Selecione</option>
-              <option value="entrada">Entrada</option>
-              <option value="saida">Saída</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="banco">Banco</label>
-            <select id="banco"><option value="">Nenhum</option></select>
-          </div>
-
-          <div class="field">
-            <label for="modalidade">Modalidade</label>
-            <select id="modalidade" required><option value="">Selecione</option></select>
-          </div>
-
-          <div class="field">
-            <label for="data">Data</label>
-            <input type="date" id="data" required>
-          </div>
-
-          <div class="field field-action">
-            <button type="submit" class="btn btn-primary btn-block">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Adicionar lançamento
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div class="panel panel-collapsible">
-        <button type="button" class="panel-head panel-toggle" onclick="toggleFiltro('filtrosContainer', this)">
-          <div>
-            <h2>Filtrar lançamentos</h2>
-            <p>Refine a lista por banco, modalidade ou tipo</p>
-          </div>
-          <span class="toggle-arrow">▾</span>
+        <button class="nav-item" data-aba="fatura">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          <span>Fatura</span>
         </button>
-
-        <div id="filtrosContainer" class="panel-body">
-          <div class="filter-grid">
-            <div class="filter-group">
-              <label>Banco</label>
-              <div id="filtroBanco" class="checkbox-grid"></div>
-            </div>
-            <div class="filter-group">
-              <label>Modalidade</label>
-              <div id="filtroModalidade" class="checkbox-grid"></div>
-            </div>
-            <div class="filter-group">
-              <label>Tipo</label>
-              <div id="filtroTipo" class="checkbox-grid">
-                <label class="check-pill">
-                  <input type="checkbox" value="entrada">
-                  <span class="pill-dot green"></span>
-                  <span>Entrada</span>
-                </label>
-                <label class="check-pill">
-                  <input type="checkbox" value="saida">
-                  <span class="pill-dot red"></span>
-                  <span>Saída</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="filter-actions">
-            <button type="button" class="btn btn-ghost" id="btnLimparFiltro">Limpar</button>
-            <button type="button" class="btn btn-primary" id="btnAplicarFiltro">Aplicar filtros</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h2>Lançamentos</h2>
-            <p id="contadorResultados">0 registros</p>
-          </div>
-        </div>
-
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Descrição</th>
-                <th>Valor</th>
-                <th>Tipo</th>
-                <th>Modalidade</th>
-                <th>Banco</th>
-                <th>Data</th>
-                <th class="text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="listaGastos"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ ABA BENEFÍCIOS ============ -->
-    <section class="aba" id="abaBeneficios">
-      <div class="cards-grid" id="beneficiosContainer"></div>
-
-      <div class="panel panel-collapsible">
-        <button type="button" class="panel-head panel-toggle" onclick="toggleFiltro('filtrosBeneficioContent', this)">
-          <div><h2>Filtrar transações</h2><p>Por período, valor, descrição ou tipo</p></div>
-          <span class="toggle-arrow">▾</span>
+        <button class="nav-item" data-aba="criptos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.5 8h4a2 2 0 0 1 0 4h-4zM9.5 12h4.5a2 2 0 0 1 0 4H9.5zM11 8v8M13 8v8"/></svg>
+          <span>Criptos</span>
         </button>
-
-        <div id="filtrosBeneficioContent" class="panel-body">
-          <div class="filter-grid filter-grid-3">
-            <div class="filter-group">
-              <label>Período</label>
-              <div class="range-row">
-                <input type="date" id="filtroBeneficioDataInicio">
-                <span>até</span>
-                <input type="date" id="filtroBeneficioDataFim">
-              </div>
-            </div>
-            <div class="filter-group">
-              <label>Valor</label>
-              <div class="range-row">
-                <input type="number" step="0.01" id="filtroBeneficioValorMin" placeholder="Mín.">
-                <span>até</span>
-                <input type="number" step="0.01" id="filtroBeneficioValorMax" placeholder="Máx.">
-              </div>
-            </div>
-            <div class="filter-group">
-              <label>Descrição</label>
-              <input type="text" id="filtroBeneficioDescricao" placeholder="Buscar...">
-            </div>
-            <div class="filter-group">
-              <label>Tipo</label>
-              <select id="filtroBeneficioTipo">
-                <option value="todos">Todos</option>
-                <option value="entrada">Entradas</option>
-                <option value="saida">Saídas</option>
-              </select>
-            </div>
-            <div class="filter-group">
-              <label>Ordenar por</label>
-              <select id="filtroBeneficioOrdenar">
-                <option value="data_desc">Data mais recente</option>
-                <option value="data_asc">Data mais antiga</option>
-                <option value="valor_desc">Maior valor</option>
-                <option value="valor_asc">Menor valor</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="filter-actions">
-            <button type="button" class="btn btn-ghost" id="btnLimparFiltroBeneficio">Limpar</button>
-            <button type="button" class="btn btn-primary" id="btnAplicarFiltroBeneficio">Aplicar filtros</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h2 id="beneficioFiltroAtivo">Selecione um benefício</h2>
-            <p>Clique em um cartão acima para ver as transações</p>
-          </div>
-        </div>
-
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr><th>Descrição</th><th>Valor</th><th>Tipo</th><th>Data</th></tr>
-            </thead>
-            <tbody id="listaBeneficioFiltrado"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ ABA FATURA ============ -->
-    <section class="aba" id="abaFatura">
-      <div class="cards-grid" id="faturaContainer"></div>
-
-      <div class="panel panel-collapsible">
-        <button type="button" class="panel-head panel-toggle" onclick="toggleFiltro('filtrosFaturaContent', this)">
-          <div><h2>Filtrar compras</h2><p>Refine as compras no crédito</p></div>
-          <span class="toggle-arrow">▾</span>
+        <button class="nav-item" data-aba="parcelas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
+          <span>Parcelas</span>
         </button>
+        <button class="nav-item" data-aba="recorrentes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span>Recorrentes</span>
+        </button>
+        <button class="nav-item" data-aba="metas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          <span>Metas</span>
+        </button>
+        <button class="nav-item" data-aba="graficos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Gráficos</span>
+        </button>
+      </nav>
 
-        <div id="filtrosFaturaContent" class="panel-body">
-          <div class="filter-grid filter-grid-3">
-            <div class="filter-group">
-              <label>Período</label>
-              <div class="range-row">
-                <input type="date" id="filtroDataInicio">
-                <span>até</span>
-                <input type="date" id="filtroDataFim">
-              </div>
-            </div>
-            <div class="filter-group">
-              <label>Valor</label>
-              <div class="range-row">
-                <input type="number" step="0.01" id="filtroValorMin" placeholder="Mín.">
-                <span>até</span>
-                <input type="number" step="0.01" id="filtroValorMax" placeholder="Máx.">
-              </div>
-            </div>
-            <div class="filter-group">
-              <label>Descrição</label>
-              <input type="text" id="filtroDescricao" placeholder="Buscar...">
-            </div>
-            <div class="filter-group">
-              <label>Ordenar por</label>
-              <select id="filtroOrdenar">
-                <option value="data_desc">Data mais recente</option>
-                <option value="data_asc">Data mais antiga</option>
-                <option value="valor_desc">Maior valor</option>
-                <option value="valor_asc">Menor valor</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="filter-actions">
-            <button type="button" class="btn btn-ghost" id="btnLimparFiltroFatura">Limpar</button>
-            <button type="button" class="btn btn-primary" id="btnAplicarFiltroFatura">Aplicar filtros</button>
-          </div>
-        </div>
+      <div class="sidebar-footer">
+        <button class="nav-item" id="btnPerfilSide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Perfil</span>
+        </button>
+        <button class="nav-item nav-item-danger" id="btnLogout">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Sair</span>
+        </button>
       </div>
 
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h2 id="tituloFaturaFiltro">Compras no crédito</h2>
-            <p id="filtroBancoAtivo">Clique em um banco acima para filtrar</p>
-          </div>
+    </aside>
+
+    <main class="content">
+
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 id="pageTitle">Visão geral</h1>
+          <p id="pageSubtitle" class="page-subtitle">Acompanhe suas finanças em tempo real</p>
         </div>
 
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr><th>Descrição</th><th>Valor</th><th>Banco</th><th>Data</th><th>Modalidade</th></tr>
-            </thead>
-            <tbody id="listaFatura"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ ABA CRIPTOS ============ -->
-    <section class="aba" id="abaCriptos">
-
-      <div class="metrics-grid metrics-criptos">
-        <div class="metric-card" data-metric="investido">
-          <div class="metric-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            Total Investido
-          </div>
-          <div class="metric-value" id="criptoTotalInvestido">R$ 0,00</div>
-        </div>
-
-        <div class="metric-card" data-metric="valorAtual">
-          <div class="metric-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            Valor Atual
-          </div>
-          <div class="metric-value" id="criptoValorAtual">R$ 0,00</div>
-        </div>
-
-        <div class="metric-card" data-metric="lucroPrejuizo">
-          <div class="metric-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
-            Lucro / Prejuízo
-          </div>
-          <div class="metric-value" id="criptoLucroPrejuizo">R$ 0,00</div>
-        </div>
-
-        <div class="metric-card" data-metric="rentabilidade">
-          <div class="metric-label">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            Rentabilidade
-          </div>
-          <div class="metric-value" id="criptoRentabilidade">0,00%</div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h2>Suas moedas</h2>
-            <p id="criptoUltimaAtualizacao">Cotações carregadas automaticamente</p>
-          </div>
-          <button type="button" class="btn btn-ghost" id="btnAtualizarCotacoes">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-            Atualizar
+        <div class="topbar-right">
+          <button class="icon-btn" id="btnCores" title="Personalizar cores">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
           </button>
-        </div>
-        <div class="cards-grid" id="criptoCards"></div>
-      </div>
 
-      <div class="panel">
-        <div class="panel-head"><div><h2>Nova operação</h2><p>Registre uma compra ou venda de cripto</p></div></div>
+          <button class="icon-btn" id="btnTema" title="Alternar tema">
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+          </button>
 
-        <form id="formCripto" class="grid-form">
-          <div class="field">
-            <label for="criptoData">Data</label>
-            <input type="date" id="criptoData" required>
-          </div>
-
-          <div class="field">
-            <label for="criptoTipo">Tipo</label>
-            <select id="criptoTipo" required>
-              <option value="compra">Compra</option>
-              <option value="venda">Venda</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="criptoMoeda">Cripto</label>
-            <select id="criptoMoeda" required>
-              <option value="">Selecione</option>
-              <option value="BTC">BTC — Bitcoin</option>
-              <option value="ETH">ETH — Ethereum</option>
-              <option value="SOL">SOL — Solana</option>
-              <option value="XRP">XRP — Ripple</option>
-              <option value="ADA">ADA — Cardano</option>
-              <option value="DOGE">DOGE — Dogecoin</option>
-              <option value="BNB">BNB — Binance Coin</option>
-              <option value="LTC">LTC — Litecoin</option>
-              <option value="DOT">DOT — Polkadot</option>
-              <option value="MATIC">MATIC — Polygon</option>
-              <option value="LINK">LINK — Chainlink</option>
-              <option value="AVAX">AVAX — Avalanche</option>
-              <option value="TRX">TRX — Tron</option>
-              <option value="ATOM">ATOM — Cosmos</option>
-              <option value="NEAR">NEAR — Near</option>
-              <option value="SHIB">SHIB — Shiba Inu</option>
-              <option value="UNI">UNI — Uniswap</option>
-              <option value="AAVE">AAVE — Aave</option>
-              <option value="USDT">USDT — Tether</option>
-              <option value="USDC">USDC — USD Coin</option>
-              <option value="OUTRA">Outra (digitar abaixo)</option>
-            </select>
-          </div>
-
-          <div class="field" id="criptoOutraWrapper" style="display:none;">
-            <label for="criptoOutra">Nome da cripto</label>
-            <input type="text" id="criptoOutra" placeholder="Ex: PEPE" maxlength="10">
-          </div>
-
-          <div class="field">
-            <label for="criptoQuantidade">Quantidade</label>
-            <input type="number" id="criptoQuantidade" step="any" min="0" placeholder="0.00000" required>
-          </div>
-
-          <div class="field">
-            <label for="criptoValorBruto">Valor Bruto (R$)</label>
-            <input type="number" id="criptoValorBruto" step="0.01" min="0" placeholder="0,00" required>
-          </div>
-
-          <div class="field">
-            <label for="criptoTaxa">Taxa (R$)</label>
-            <input type="number" id="criptoTaxa" step="0.01" min="0" placeholder="0,00" value="0">
-          </div>
-
-          <div class="field">
-            <label>Preço unitário (auto)</label>
-            <input type="text" id="criptoPrecoUnitario" readonly placeholder="—" class="readonly-field">
-          </div>
-
-          <div class="field">
-            <label>Valor líquido (auto)</label>
-            <input type="text" id="criptoValorLiquido" readonly placeholder="—" class="readonly-field">
-          </div>
-
-          <div class="field field-span-2">
-            <label for="criptoObservacao">Observação (opcional)</label>
-            <input type="text" id="criptoObservacao" placeholder="Ex: corretora Binance">
-          </div>
-
-          <div class="field field-action">
-            <button type="submit" class="btn btn-primary btn-block">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Adicionar operação
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div class="panel panel-collapsible">
-        <button type="button" class="panel-head panel-toggle" onclick="toggleFiltro('filtrosCriptoContent', this)">
-          <div><h2>Filtrar operações</h2><p>Por moeda, tipo, período ou valor</p></div>
-          <span class="toggle-arrow">▾</span>
-        </button>
-
-        <div id="filtrosCriptoContent" class="panel-body collapsed">
-          <div class="filter-grid filter-grid-3">
-            <div class="filter-group">
-              <label>Moeda</label>
-              <select id="filtroCriptoMoeda"><option value="todas">Todas</option></select>
+          <div class="user-chip" id="userChip">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <div class="user-meta">
+              <span class="user-name" id="userNome">Usuário</span>
+              <span class="user-email" id="userEmail">email@exemplo.com</span>
             </div>
-            <div class="filter-group">
-              <label>Tipo</label>
-              <select id="filtroCriptoTipo">
-                <option value="todos">Todos</option>
-                <option value="compra">Compras</option>
-                <option value="venda">Vendas</option>
+          </div>
+        </div>
+      </header>
+
+      <!-- ==============================
+           ABA: GERAL
+      =============================== -->
+      <section class="aba active" id="abaGeral">
+
+        <div class="metrics-grid">
+          <div class="metric-card" data-metric="entrada">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              Entradas
+            </div>
+            <div class="metric-value" id="totalEntrada">R$ 0,00</div>
+          </div>
+
+          <div class="metric-card" data-metric="saida">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+              Saídas
+            </div>
+            <div class="metric-value" id="totalSaida">R$ 0,00</div>
+          </div>
+
+          <div class="metric-card" data-metric="saldo">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Saldo
+            </div>
+            <div class="metric-value" id="saldoFinal">R$ 0,00</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Novo lançamento</h2>
+              <p>Registre uma entrada ou saída</p>
+            </div>
+          </div>
+
+          <form id="formGasto" class="grid-form">
+            <div class="field field-span-2">
+              <label for="descricao">Descrição</label>
+              <input type="text" id="descricao" placeholder="Ex: Salário, Mercado..." required>
+            </div>
+
+            <div class="field">
+              <label for="valor">Valor</label>
+              <input type="number" id="valor" step="0.01" min="0" placeholder="0,00" required>
+            </div>
+
+            <div class="field">
+              <label for="tipo">Tipo</label>
+              <select id="tipo" required>
+                <option value="">Selecione</option>
+                <option value="entrada">Entrada</option>
+                <option value="saida">Saída</option>
               </select>
             </div>
-            <div class="filter-group">
-              <label>Período</label>
-              <div class="range-row">
-                <input type="date" id="filtroCriptoDataInicio">
-                <span>até</span>
-                <input type="date" id="filtroCriptoDataFim">
+
+            <div class="field">
+              <label for="banco">Banco</label>
+              <select id="banco">
+                <option value="">Nenhum</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="modalidade">Modalidade</label>
+              <select id="modalidade" required>
+                <option value="">Selecione</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="data">Data</label>
+              <input type="date" id="data" required>
+            </div>
+
+            <div class="field field-action">
+              <button type="submit" class="btn btn-primary btn-block">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Adicionar lançamento
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel panel-collapsible">
+          <button type="button" class="panel-head panel-toggle" onclick="toggleFiltro('filtrosContainer', this)">
+            <div>
+              <h2>Filtrar lançamentos</h2>
+              <p>Refine a lista por banco, modalidade ou tipo</p>
+            </div>
+            <span class="toggle-arrow">▾</span>
+          </button>
+
+          <div id="filtrosContainer" class="panel-body">
+            <div class="filter-grid">
+              <div class="filter-group">
+                <label>Banco</label>
+                <div id="filtroBanco" class="checkbox-grid"></div>
               </div>
+
+              <div class="filter-group">
+                <label>Modalidade</label>
+                <div id="filtroModalidade" class="checkbox-grid"></div>
+              </div>
+
+              <div class="filter-group">
+                <label>Tipo</label>
+                <div id="filtroTipo" class="checkbox-grid">
+                  <label class="check-pill">
+                    <input type="checkbox" value="entrada">
+                    <span class="pill-dot green"></span>
+                    <span>Entrada</span>
+                  </label>
+                  <label class="check-pill">
+                    <input type="checkbox" value="saida">
+                    <span class="pill-dot red"></span>
+                    <span>Saída</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-actions">
+              <button type="button" class="btn btn-ghost" id="btnLimparFiltro">Limpar</button>
+              <button type="button" class="btn btn-primary" id="btnAplicarFiltro">Aplicar filtros</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Lançamentos</h2>
+              <p id="contadorResultados">0 registros</p>
             </div>
           </div>
 
-          <div class="filter-actions">
-            <button type="button" class="btn btn-ghost" id="btnLimparFiltroCripto">Limpar</button>
-            <button type="button" class="btn btn-primary" id="btnAplicarFiltroCripto">Aplicar filtros</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h2>Histórico de operações</h2>
-            <p id="criptoContador">0 registros</p>
-          </div>
-          <div class="panel-actions">
-            <button type="button" class="btn btn-ghost" id="btnExportarJSON" title="Exportar JSON">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              JSON
-            </button>
-            <button type="button" class="btn btn-ghost" id="btnExportarCSV" title="Exportar CSV">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-              CSV
-            </button>
-            <button type="button" class="btn btn-ghost" id="btnImportarJSON" title="Importar JSON">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Importar
-            </button>
-            <input type="file" id="inputImportarJSON" accept=".json" style="display:none;">
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  <th>Valor</th>
+                  <th>Tipo</th>
+                  <th>Modalidade</th>
+                  <th>Banco</th>
+                  <th>Data</th>
+                  <th class="text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="listaGastos"></tbody>
+            </table>
           </div>
         </div>
 
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Data</th><th>Tipo</th><th>Cripto</th><th>Qtd</th><th>Valor Bruto</th>
-                <th>Taxa</th><th>Valor Líq.</th><th>Preço Unit.</th><th>Preço Médio</th>
-                <th>Lucro/Prej.</th><th>Rentab.</th><th class="text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="criptoLista"></tbody>
-          </table>
+      </section>
+
+      <!-- ==============================
+           ABA: BENEFÍCIOS
+      =============================== -->
+      <section class="aba" id="abaBeneficios">
+        <div class="cards-grid" id="beneficiosContainer"></div>
+
+        <div class="panel panel-collapsible">
+          <button type="button" class="panel-head panel-toggle" onclick="toggleFiltro('filtrosBeneficioContent', this)">
+            <div>
+              <h2>Filtrar transações</h2>
+              <p>Por período, valor, descrição ou tipo</p>
+            </div>
+            <span class="toggle-arrow">▾</span>
+          </button>
+
+          <div id="filtrosBeneficioContent" class="panel-body">
+            <div class="filter-grid filter-grid-3">
+              <div class="filter-group">
+                <label>Período</label>
+                <div class="range-row">
+                  <input type="date" id="filtroBeneficioDataInicio">
+                  <span>até</span>
+                  <input type="date" id="filtroBeneficioDataFim">
+                </div>
+              </div>
+
+              <div class="filter-group">
+                <label>Valor</label>
+                <div class="range-row">
+                  <input type="number" step="0.01" id="filtroBeneficioValorMin" placeholder="Mín.">
+                  <span>até</span>
+                  <input type="number" step="0.01" id="filtroBeneficioValorMax" placeholder="Máx.">
+                </div>
+              </div>
+
+              <div class="filter-group">
+                <label>Descrição</label>
+                <input type="text" id="filtroBeneficioDescricao" placeholder="Buscar...">
+              </div>
+
+              <div class="filter-group">
+                <label>Tipo</label>
+                <select id="filtroBeneficioTipo">
+                  <option value="todos">Todos</option>
+                  <option value="entrada">Entradas</option>
+                  <option value="saida">Saídas</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label>Ordenar por</label>
+                <select id="filtroBeneficioOrdenar">
+                  <option value="data_desc">Data mais recente</option>
+                  <option value="data_asc">Data mais antiga</option>
+                  <option value="valor_desc">Maior valor</option>
+                  <option value="valor_asc">Menor valor</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-actions">
+              <button type="button" class="btn btn-ghost" id="btnLimparFiltroBeneficio">Limpar</button>
+              <button type="button" class="btn btn-primary" id="btnAplicarFiltroBeneficio">Aplicar filtros</button>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
 
-    <!-- ============ ABA PARCELAS ============ -->
-    <section class="aba" id="abaParcelas">
-      <div class="metrics-grid metrics-parcelas">
-        <div class="metric-card" data-metric="parcelasAtivas">
-          <div class="metric-label">Parcelas ativas</div>
-          <div class="metric-value" id="parcelasTotalAtivas">0</div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="beneficioFiltroAtivo">Selecione um benefício</h2>
+              <p>Clique em um cartão acima para ver as transações</p>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  <th>Valor</th>
+                  <th>Tipo</th>
+                  <th>Data</th>
+                </tr>
+              </thead>
+              <tbody id="listaBeneficioFiltrado"></tbody>
+            </table>
+          </div>
         </div>
-        <div class="metric-card" data-metric="parcelasRestante">
-          <div class="metric-label">Valor restante</div>
-          <div class="metric-value" id="parcelasValorRestante">R$ 0,00</div>
+      </section>
+
+      <!-- ==============================
+           ABA: FATURA
+      =============================== -->
+      <section class="aba" id="abaFatura">
+        <div class="cards-grid" id="faturaContainer"></div>
+
+        <div class="panel panel-collapsible">
+          <button type="button" class="panel-head panel-toggle" onclick="toggleFiltro('filtrosFaturaContent', this)">
+            <div>
+              <h2>Filtrar compras</h2>
+              <p>Refine as compras no crédito</p>
+            </div>
+            <span class="toggle-arrow">▾</span>
+          </button>
+
+          <div id="filtrosFaturaContent" class="panel-body">
+            <div class="filter-grid filter-grid-3">
+              <div class="filter-group">
+                <label>Período</label>
+                <div class="range-row">
+                  <input type="date" id="filtroDataInicio">
+                  <span>até</span>
+                  <input type="date" id="filtroDataFim">
+                </div>
+              </div>
+
+              <div class="filter-group">
+                <label>Valor</label>
+                <div class="range-row">
+                  <input type="number" step="0.01" id="filtroValorMin" placeholder="Mín.">
+                  <span>até</span>
+                  <input type="number" step="0.01" id="filtroValorMax" placeholder="Máx.">
+                </div>
+              </div>
+
+              <div class="filter-group">
+                <label>Descrição</label>
+                <input type="text" id="filtroDescricao" placeholder="Buscar...">
+              </div>
+
+              <div class="filter-group">
+                <label>Ordenar por</label>
+                <select id="filtroOrdenar">
+                  <option value="data_desc">Data mais recente</option>
+                  <option value="data_asc">Data mais antiga</option>
+                  <option value="valor_desc">Maior valor</option>
+                  <option value="valor_asc">Menor valor</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="filter-actions">
+              <button type="button" class="btn btn-ghost" id="btnLimparFiltroFatura">Limpar</button>
+              <button type="button" class="btn btn-primary" id="btnAplicarFiltroFatura">Aplicar filtros</button>
+            </div>
+          </div>
         </div>
-        <div class="metric-card" data-metric="parcelasMes">
-          <div class="metric-label">Este mês</div>
-          <div class="metric-value" id="parcelasValorMes">R$ 0,00</div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="tituloFaturaFiltro">Compras no crédito</h2>
+              <p id="filtroBancoAtivo">Clique em um banco acima para filtrar</p>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  <th>Valor</th>
+                  <th>Banco</th>
+                  <th>Data</th>
+                  <th>Modalidade</th>
+                </tr>
+              </thead>
+              <tbody id="listaFatura"></tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="panel">
-        <div class="panel-head"><div><h2>Nova compra parcelada</h2><p>As parcelas entram automaticamente na fatura do banco</p></div></div>
+      <!-- ==============================
+           ABA: CRIPTOS
+      =============================== -->
+      <section class="aba" id="abaCriptos">
 
-        <form id="formParcela" class="grid-form">
-          <div class="field field-span-2">
-            <label for="parcelaDescricao">Descrição</label>
-            <input type="text" id="parcelaDescricao" placeholder="Ex: Notebook Dell" required>
+        <div class="metrics-grid metrics-criptos">
+          <div class="metric-card" data-metric="investido">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Total Investido
+            </div>
+            <div class="metric-value" id="criptoTotalInvestido">R$ 0,00</div>
           </div>
-          <div class="field">
-            <label for="parcelaValor">Valor total (R$)</label>
-            <input type="number" id="parcelaValor" step="0.01" min="0" placeholder="0,00" required>
-          </div>
-          <div class="field">
-            <label for="parcelaNumero">Nº de parcelas</label>
-            <input type="number" id="parcelaNumero" min="2" max="48" step="1" placeholder="2" required>
-          </div>
-          <div class="field">
-            <label for="parcelaBanco">Banco (crédito)</label>
-            <select id="parcelaBanco" required><option value="">Selecione</option></select>
-          </div>
-          <div class="field">
-            <label for="parcelaData">Data da 1ª parcela</label>
-            <input type="date" id="parcelaData" required>
-          </div>
-          <div class="field">
-            <label for="parcelaCategoria">Categoria</label>
-            <input type="text" id="parcelaCategoria" placeholder="Ex: Eletrônicos">
-          </div>
-          <div class="field">
-            <label>Valor da parcela (auto)</label>
-            <input type="text" id="parcelaValorUnit" readonly placeholder="—" class="readonly-field">
-          </div>
-          <div class="field">
-            <label>Última parcela</label>
-            <input type="text" id="parcelaDataFim" readonly placeholder="—" class="readonly-field">
-          </div>
-          <div class="field field-action">
-            <button type="submit" class="btn btn-primary btn-block">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Adicionar compra
-            </button>
-          </div>
-        </form>
-      </div>
 
-      <div class="panel">
-        <div class="panel-head"><div><h2>Compras parceladas</h2><p id="parcelasContador">0 compras</p></div></div>
+          <div class="metric-card" data-metric="valorAtual">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              Valor Atual
+            </div>
+            <div class="metric-value" id="criptoValorAtual">R$ 0,00</div>
+          </div>
 
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Descrição</th><th>Banco</th><th>Valor total</th><th>Parcela</th>
-                <th>Progresso</th><th>Restante</th><th>Próx. venc.</th>
-                <th class="text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="parcelaLista"></tbody>
-          </table>
+          <div class="metric-card" data-metric="lucroPrejuizo">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+              Lucro / Prejuízo
+            </div>
+            <div class="metric-value" id="criptoLucroPrejuizo">R$ 0,00</div>
+          </div>
+
+          <div class="metric-card" data-metric="rentabilidade">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              Rentabilidade
+            </div>
+            <div class="metric-value" id="criptoRentabilidade">0,00%</div>
+          </div>
         </div>
-      </div>
-    </section>
 
-    <!-- ============ ABA RECORRENTES ============ -->
-    <section class="aba" id="abaRecorrentes">
-      <div class="metrics-grid metrics-recorrentes">
-        <div class="metric-card" data-metric="fixasSaidas">
-          <div class="metric-label">Contas fixas / mês</div>
-          <div class="metric-value" id="recorrentesTotalSaidas">R$ 0,00</div>
-        </div>
-        <div class="metric-card" data-metric="fixasEntradas">
-          <div class="metric-label">Recebimentos fixos / mês</div>
-          <div class="metric-value" id="recorrentesTotalEntradas">R$ 0,00</div>
-        </div>
-        <div class="metric-card" data-metric="fixasSaldo">
-          <div class="metric-label">Saldo fixo previsto</div>
-          <div class="metric-value" id="recorrentesSaldoFixo">R$ 0,00</div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head"><div><h2>Nova recorrência</h2><p>Cadastre contas e recebimentos que se repetem</p></div></div>
-
-        <form id="formRecorrente" class="grid-form">
-          <div class="field field-span-2">
-            <label for="recorrenteDescricao">Descrição</label>
-            <input type="text" id="recorrenteDescricao" placeholder="Ex: Internet Vivo Fibra" required>
-          </div>
-          <div class="field">
-            <label for="recorrenteValor">Valor (R$)</label>
-            <input type="number" id="recorrenteValor" step="0.01" min="0" placeholder="0,00" required>
-          </div>
-          <div class="field">
-            <label for="recorrenteTipo">Tipo</label>
-            <select id="recorrenteTipo" required>
-              <option value="saida">Gasto (saída)</option>
-              <option value="entrada">Recebimento (entrada)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="recorrenteFrequencia">Frequência</label>
-            <select id="recorrenteFrequencia" required>
-              <option value="mensal">Mensal</option>
-              <option value="semanal">Semanal</option>
-              <option value="anual">Anual</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="recorrenteDia">Dia do mês</label>
-            <input type="number" id="recorrenteDia" min="1" max="31" placeholder="5" required>
-          </div>
-          <div class="field">
-            <label for="recorrenteBanco">Banco</label>
-            <select id="recorrenteBanco"><option value="">Nenhum</option></select>
-          </div>
-          <div class="field">
-            <label for="recorrenteModalidade">Modalidade</label>
-            <select id="recorrenteModalidade"><option value="">Selecione</option></select>
-          </div>
-          <div class="field field-action">
-            <button type="submit" class="btn btn-primary btn-block">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Adicionar recorrência
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head"><div><h2>Recorrências cadastradas</h2><p id="recorrentesContador">0 recorrências</p></div></div>
-
-        <div class="table-wrapper">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Descrição</th><th>Tipo</th><th>Valor</th><th>Frequência</th>
-                <th>Dia</th><th>Banco</th><th>Modalidade</th>
-                <th class="text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="recorrenteLista"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ ABA METAS ============ -->
-    <section class="aba" id="abaMetas">
-      <div class="panel">
-        <div class="panel-head"><div><h2>Nova meta</h2><p>Defina objetivos de gasto, economia ou cripto</p></div></div>
-
-        <form id="formMeta" class="grid-form">
-          <div class="field field-span-2">
-            <label for="metaDescricao">Descrição</label>
-            <input type="text" id="metaDescricao" placeholder="Ex: Economizar pra viagem" required>
-          </div>
-          <div class="field">
-            <label for="metaTipo">Tipo de meta</label>
-            <select id="metaTipo" required>
-              <option value="gasto">Gasto (limite)</option>
-              <option value="economia">Economia (juntar)</option>
-              <option value="cripto">Cripto (aportar)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="metaValor">Valor alvo (R$)</label>
-            <input type="number" id="metaValor" step="0.01" min="0" placeholder="0,00" required>
-          </div>
-          <div class="field">
-            <label for="metaPeriodo">Período</label>
-            <select id="metaPeriodo" required>
-              <option value="mensal">Mensal</option>
-              <option value="anual">Anual</option>
-              <option value="personalizado">Personalizado</option>
-            </select>
-          </div>
-          <div class="field" id="metaDataInicioWrapper">
-            <label for="metaDataInicio">Data início</label>
-            <input type="date" id="metaDataInicio">
-          </div>
-          <div class="field" id="metaDataFimWrapper">
-            <label for="metaDataFim">Data fim</label>
-            <input type="date" id="metaDataFim">
-          </div>
-          <div class="field" id="metaCategoriaWrapper" style="display:none;">
-            <label for="metaCategoria">Categoria / Modalidade</label>
-            <select id="metaCategoria"><option value="TODAS">Todas</option></select>
-          </div>
-          <div class="field" id="metaCriptoWrapper" style="display:none;">
-            <label for="metaCripto">Cripto alvo</label>
-            <select id="metaCripto">
-              <option value="TODAS">Todas</option>
-              <option value="BTC">BTC</option>
-              <option value="ETH">ETH</option>
-              <option value="SOL">SOL</option>
-              <option value="XRP">XRP</option>
-              <option value="ADA">ADA</option>
-              <option value="DOGE">DOGE</option>
-            </select>
-          </div>
-          <div class="field field-action">
-            <button type="submit" class="btn btn-primary btn-block">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Criar meta
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Suas moedas</h2>
+              <p id="criptoUltimaAtualizacao">Cotações carregadas automaticamente</p>
+            </div>
+            <button type="button" class="btn btn-ghost" id="btnAtualizarCotacoes">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Atualizar
             </button>
           </div>
-        </form>
-      </div>
+          <div class="cards-grid" id="criptoCards"></div>
+        </div>
 
-      <div class="panel">
-        <div class="panel-head"><div><h2>Minhas metas</h2><p id="metasContador">0 metas</p></div></div>
-        <div class="metas-grid" id="metasContainer"></div>
-      </div>
-    </section>
-
-    <!-- ============ ABA GRÁFICOS ============ -->
-    <section class="aba" id="abaGraficos">
-      <div class="panel">
-        <div class="panel-head">
-          <div>
-            <h2>Período de análise</h2>
-            <p>Os gráficos refletem o período selecionado</p>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Nova operação</h2>
+              <p>Registre uma compra ou venda de cripto</p>
+            </div>
           </div>
-          <div class="panel-actions">
-            <button type="button" class="btn btn-ghost" id="btnGraficoMesAtual">Mês atual</button>
-            <button type="button" class="btn btn-ghost" id="btnGraficoUltimos3">3 meses</button>
-            <button type="button" class="btn btn-ghost" id="btnGraficoUltimos6">6 meses</button>
-            <button type="button" class="btn btn-ghost" id="btnGraficoAno">Ano</button>
+
+          <form id="formCripto" class="grid-form">
+            <div class="field">
+              <label for="criptoData">Data</label>
+              <input type="date" id="criptoData" required>
+            </div>
+
+            <div class="field">
+              <label for="criptoTipo">Tipo</label>
+              <select id="criptoTipo" required>
+                <option value="compra">Compra</option>
+                <option value="venda">Venda</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="criptoMoeda">Cripto</label>
+              <select id="criptoMoeda" required>
+                <option value="">Selecione</option>
+                <option value="BTC">BTC — Bitcoin</option>
+                <option value="ETH">ETH — Ethereum</option>
+                <option value="SOL">SOL — Solana</option>
+                <option value="XRP">XRP — Ripple</option>
+                <option value="ADA">ADA — Cardano</option>
+                <option value="DOGE">DOGE — Dogecoin</option>
+                <option value="BNB">BNB — Binance Coin</option>
+                <option value="LTC">LTC — Litecoin</option>
+                <option value="DOT">DOT — Polkadot</option>
+                <option value="MATIC">MATIC — Polygon</option>
+                <option value="LINK">LINK — Chainlink</option>
+                <option value="AVAX">AVAX — Avalanche</option>
+                <option value="TRX">TRX — Tron</option>
+                <option value="ATOM">ATOM — Cosmos</option>
+                <option value="NEAR">NEAR — Near</option>
+                <option value="SHIB">SHIB — Shiba Inu</option>
+                <option value="UNI">UNI — Uniswap</option>
+                <option value="AAVE">AAVE — Aave</option>
+                <option value="USDT">USDT — Tether</option>
+                <option value="USDC">USDC — USD Coin</option>
+                <option value="OUTRA">Outra (digitar abaixo)</option>
+              </select>
+            </div>
+
+            <div class="field" id="criptoOutraWrapper" style="display:none;">
+              <label for="criptoOutra">Nome da cripto</label>
+              <input type="text" id="criptoOutra" placeholder="Ex: PEPE" maxlength="10">
+            </div>
+
+            <div class="field">
+              <label for="criptoQuantidade">Quantidade</label>
+              <input type="number" id="criptoQuantidade" step="any" min="0" placeholder="0.00000" required>
+            </div>
+
+            <div class="field">
+              <label for="criptoValorBruto">Valor Bruto (R$)</label>
+              <input type="number" id="criptoValorBruto" step="0.01" min="0" placeholder="0,00" required>
+            </div>
+
+            <div class="field">
+              <label for="criptoTaxa">Taxa (R$)</label>
+              <input type="number" id="criptoTaxa" step="0.01" min="0" placeholder="0,00" value="0">
+            </div>
+
+            <div class="field">
+              <label>Preço unitário (auto)</label>
+              <input type="text" id="criptoPrecoUnitario" readonly placeholder="—" class="readonly-field">
+            </div>
+
+            <div class="field">
+              <label>Valor líquido (auto)</label>
+              <input type="text" id="criptoValorLiquido" readonly placeholder="—" class="readonly-field">
+            </div>
+
+            <div class="field field-span-2">
+              <label for="criptoObservacao">Observação (opcional)</label>
+              <input type="text" id="criptoObservacao" placeholder="Ex: corretora Binance">
+            </div>
+
+            <div class="field field-action">
+              <button type="submit" class="btn btn-primary btn-block">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Adicionar operação
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel panel-collapsible">
+          <button type="button" class="panel-head panel-toggle" onclick="toggleFiltro('filtrosCriptoContent', this)">
+            <div>
+              <h2>Filtrar operações</h2>
+              <p>Por moeda, tipo, período ou valor</p>
+            </div>
+            <span class="toggle-arrow">▾</span>
+          </button>
+
+          <div id="filtrosCriptoContent" class="panel-body collapsed">
+            <div class="filter-grid filter-grid-3">
+              <div class="filter-group">
+                <label>Moeda</label>
+                <select id="filtroCriptoMoeda"><option value="todas">Todas</option></select>
+              </div>
+
+              <div class="filter-group">
+                <label>Tipo</label>
+                <select id="filtroCriptoTipo">
+                  <option value="todos">Todos</option>
+                  <option value="compra">Compras</option>
+                  <option value="venda">Vendas</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label>Período</label>
+                <div class="range-row">
+                  <input type="date" id="filtroCriptoDataInicio">
+                  <span>até</span>
+                  <input type="date" id="filtroCriptoDataFim">
+                </div>
+              </div>
+            </div>
+
+            <div class="filter-actions">
+              <button type="button" class="btn btn-ghost" id="btnLimparFiltroCripto">Limpar</button>
+              <button type="button" class="btn btn-primary" id="btnAplicarFiltroCripto">Aplicar filtros</button>
+            </div>
           </div>
         </div>
 
-        <div class="filter-grid filter-grid-3" style="padding: 0 24px 22px;">
-          <div class="filter-group">
-            <label>Data início</label>
-            <input type="date" id="graficoDataInicio">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Histórico de operações</h2>
+              <p id="criptoContador">0 registros</p>
+            </div>
+            <div class="panel-actions">
+              <button type="button" class="btn btn-ghost" id="btnExportarJSON" title="Exportar JSON">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                JSON
+              </button>
+              <button type="button" class="btn btn-ghost" id="btnExportarCSV" title="Exportar CSV">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                CSV
+              </button>
+              <button type="button" class="btn btn-ghost" id="btnImportarJSON" title="Importar JSON">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Importar
+              </button>
+              <input type="file" id="inputImportarJSON" accept=".json" style="display:none;">
+            </div>
           </div>
-          <div class="filter-group">
-            <label>Data fim</label>
-            <input type="date" id="graficoDataFim">
-          </div>
-          <div class="filter-group">
-            <label>&nbsp;</label>
-            <button type="button" class="btn btn-primary" id="btnGraficoAplicar">Aplicar período</button>
+
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Tipo</th>
+                  <th>Cripto</th>
+                  <th>Qtd</th>
+                  <th>Valor Bruto</th>
+                  <th>Taxa</th>
+                  <th>Valor Líq.</th>
+                  <th>Preço Unit.</th>
+                  <th>Preço Médio</th>
+                  <th>Lucro/Prej.</th>
+                  <th>Rentab.</th>
+                  <th class="text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="criptoLista"></tbody>
+            </table>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="metrics-grid metrics-graficos">
-        <div class="metric-card" data-metric="gSaldo"><div class="metric-label">Saldo do período</div><div class="metric-value" id="graficoSaldo">R$ 0,00</div></div>
-        <div class="metric-card" data-metric="gEntradas"><div class="metric-label">Entradas</div><div class="metric-value" id="graficoEntradas">R$ 0,00</div></div>
-        <div class="metric-card" data-metric="gSaidas"><div class="metric-label">Saídas</div><div class="metric-value" id="graficoSaidas">R$ 0,00</div></div>
-        <div class="metric-card" data-metric="gCripto"><div class="metric-label">Cripto (valor atual)</div><div class="metric-value" id="graficoCripto">R$ 0,00</div></div>
-        <div class="metric-card" data-metric="gFatura"><div class="metric-label">Fatura total</div><div class="metric-value" id="graficoFatura">R$ 0,00</div></div>
-      </div>
+      <!-- ==============================
+           ABA: PARCELAS
+      =============================== -->
+      <section class="aba" id="abaParcelas">
 
-      <div class="charts-grid">
-        <div class="panel chart-panel"><div class="panel-head"><div><h2>Gastos por categoria</h2><p>Inclui benefícios e modalidades</p></div></div><div class="chart-wrapper"><canvas id="chartCategorias"></canvas></div></div>
-        <div class="panel chart-panel"><div class="panel-head"><div><h2>Gastos por banco</h2><p>Total gasto em cada banco</p></div></div><div class="chart-wrapper"><canvas id="chartBancos"></canvas></div></div>
-        <div class="panel chart-panel"><div class="panel-head"><div><h2>Evolução mensal</h2><p>Entradas vs Saídas (últimos 6 meses)</p></div></div><div class="chart-wrapper"><canvas id="chartEvolucao"></canvas></div></div>
-        <div class="panel chart-panel"><div class="panel-head"><div><h2>Carteira cripto</h2><p>Distribuição por moeda</p></div></div><div class="chart-wrapper"><canvas id="chartCripto"></canvas></div></div>
-        <div class="panel chart-panel"><div class="panel-head"><div><h2>Fatura por banco</h2><p>Compras no crédito do período</p></div></div><div class="chart-wrapper"><canvas id="chartFatura"></canvas></div></div>
-        <div class="panel chart-panel"><div class="panel-head"><div><h2>Benefícios</h2><p>Saldo atual de cada cartão</p></div></div><div class="chart-wrapper"><canvas id="chartBeneficios"></canvas></div></div>
-      </div>
-    </section>
+        <div class="metrics-grid metrics-parcelas">
+          <div class="metric-card" data-metric="parcelasAtivas">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
+              Parcelas ativas
+            </div>
+            <div class="metric-value" id="parcelasTotalAtivas">0</div>
+          </div>
 
-  </main>
-</div>
+          <div class="metric-card" data-metric="parcelasRestante">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Valor restante
+            </div>
+            <div class="metric-value" id="parcelasValorRestante">R$ 0,00</div>
+          </div>
+
+          <div class="metric-card" data-metric="parcelasMes">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Este mês
+            </div>
+            <div class="metric-value" id="parcelasValorMes">R$ 0,00</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Nova compra parcelada</h2>
+              <p>As parcelas entram automaticamente na fatura do banco nos meses correspondentes</p>
+            </div>
+          </div>
+
+          <form id="formParcela" class="grid-form">
+            <div class="field field-span-2">
+              <label for="parcelaDescricao">Descrição</label>
+              <input type="text" id="parcelaDescricao" placeholder="Ex: Notebook Dell" required>
+            </div>
+
+            <div class="field">
+              <label for="parcelaValor">Valor total (R$)</label>
+              <input type="number" id="parcelaValor" step="0.01" min="0" placeholder="0,00" required>
+            </div>
+
+            <div class="field">
+              <label for="parcelaNumero">Nº de parcelas</label>
+              <input type="number" id="parcelaNumero" min="2" max="48" step="1" placeholder="2" required>
+            </div>
+
+            <div class="field">
+              <label for="parcelaBanco">Banco (crédito)</label>
+              <select id="parcelaBanco" required>
+                <option value="">Selecione</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="parcelaData">Data da 1ª parcela</label>
+              <input type="date" id="parcelaData" required>
+            </div>
+
+            <div class="field">
+              <label for="parcelaCategoria">Categoria</label>
+              <input type="text" id="parcelaCategoria" placeholder="Ex: Eletrônicos">
+            </div>
+
+            <div class="field">
+              <label>Valor da parcela (auto)</label>
+              <input type="text" id="parcelaValorUnit" readonly placeholder="—" class="readonly-field">
+            </div>
+
+            <div class="field">
+              <label>Última parcela</label>
+              <input type="text" id="parcelaDataFim" readonly placeholder="—" class="readonly-field">
+            </div>
+
+            <div class="field field-action">
+              <button type="submit" class="btn btn-primary btn-block">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Adicionar compra
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Compras parceladas</h2>
+              <p id="parcelasContador">0 compras</p>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  <th>Banco</th>
+                  <th>Valor total</th>
+                  <th>Parcela</th>
+                  <th>Progresso</th>
+                  <th>Restante</th>
+                  <th>Próx. venc.</th>
+                  <th class="text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="parcelaLista"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================
+           ABA: RECORRENTES
+      =============================== -->
+      <section class="aba" id="abaRecorrentes">
+
+        <div class="metrics-grid metrics-recorrentes">
+          <div class="metric-card" data-metric="fixasSaidas">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+              Contas fixas / mês
+            </div>
+            <div class="metric-value" id="recorrentesTotalSaidas">R$ 0,00</div>
+          </div>
+
+          <div class="metric-card" data-metric="fixasEntradas">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              Recebimentos fixos / mês
+            </div>
+            <div class="metric-value" id="recorrentesTotalEntradas">R$ 0,00</div>
+          </div>
+
+          <div class="metric-card" data-metric="fixasSaldo">
+            <div class="metric-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              Saldo fixo previsto
+            </div>
+            <div class="metric-value" id="recorrentesSaldoFixo">R$ 0,00</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Nova recorrência</h2>
+              <p>Cadastre contas e recebimentos que se repetem</p>
+            </div>
+          </div>
+
+          <form id="formRecorrente" class="grid-form">
+            <div class="field field-span-2">
+              <label for="recorrenteDescricao">Descrição</label>
+              <input type="text" id="recorrenteDescricao" placeholder="Ex: Internet Vivo Fibra" required>
+            </div>
+
+            <div class="field">
+              <label for="recorrenteValor">Valor (R$)</label>
+              <input type="number" id="recorrenteValor" step="0.01" min="0" placeholder="0,00" required>
+            </div>
+
+            <div class="field">
+              <label for="recorrenteTipo">Tipo</label>
+              <select id="recorrenteTipo" required>
+                <option value="saida">Gasto (saída)</option>
+                <option value="entrada">Recebimento (entrada)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="recorrenteFrequencia">Frequência</label>
+              <select id="recorrenteFrequencia" required>
+                <option value="mensal">Mensal</option>
+                <option value="semanal">Semanal</option>
+                <option value="anual">Anual</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="recorrenteDia">Dia do mês</label>
+              <input type="number" id="recorrenteDia" min="1" max="31" placeholder="5" required>
+            </div>
+
+            <div class="field">
+              <label for="recorrenteBanco">Banco</label>
+              <select id="recorrenteBanco"><option value="">Nenhum</option></select>
+            </div>
+
+            <div class="field">
+              <label for="recorrenteModalidade">Modalidade</label>
+              <select id="recorrenteModalidade"><option value="">Selecione</option></select>
+            </div>
+
+            <div class="field field-action">
+              <button type="submit" class="btn btn-primary btn-block">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Adicionar recorrência
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Recorrências cadastradas</h2>
+              <p id="recorrentesContador">0 recorrências</p>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Descrição</th>
+                  <th>Tipo</th>
+                  <th>Valor</th>
+                  <th>Frequência</th>
+                  <th>Dia</th>
+                  <th>Banco</th>
+                  <th>Modalidade</th>
+                  <th class="text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="recorrenteLista"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================
+           ABA: METAS
+      =============================== -->
+      <section class="aba" id="abaMetas">
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Nova meta</h2>
+              <p>Defina objetivos de gasto, economia ou cripto</p>
+            </div>
+          </div>
+
+          <form id="formMeta" class="grid-form">
+            <div class="field field-span-2">
+              <label for="metaDescricao">Descrição</label>
+              <input type="text" id="metaDescricao" placeholder="Ex: Economizar pra viagem" required>
+            </div>
+
+            <div class="field">
+              <label for="metaTipo">Tipo de meta</label>
+              <select id="metaTipo" required>
+                <option value="gasto">Gasto (limite)</option>
+                <option value="economia">Economia (juntar)</option>
+                <option value="cripto">Cripto (aportar)</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="metaValor">Valor alvo (R$)</label>
+              <input type="number" id="metaValor" step="0.01" min="0" placeholder="0,00" required>
+            </div>
+
+            <div class="field">
+              <label for="metaPeriodo">Período</label>
+              <select id="metaPeriodo" required>
+                <option value="mensal">Mensal</option>
+                <option value="anual">Anual</option>
+                <option value="personalizado">Personalizado</option>
+              </select>
+            </div>
+
+            <div class="field" id="metaDataInicioWrapper">
+              <label for="metaDataInicio">Data início</label>
+              <input type="date" id="metaDataInicio">
+            </div>
+
+            <div class="field" id="metaDataFimWrapper">
+              <label for="metaDataFim">Data fim</label>
+              <input type="date" id="metaDataFim">
+            </div>
+
+            <div class="field" id="metaCategoriaWrapper" style="display:none;">
+              <label for="metaCategoria">Categoria / Modalidade</label>
+              <select id="metaCategoria"><option value="">Todas</option></select>
+            </div>
+
+            <div class="field" id="metaCriptoWrapper" style="display:none;">
+              <label for="metaCripto">Cripto alvo</label>
+              <select id="metaCripto">
+                <option value="TODAS">Todas</option>
+                <option value="BTC">BTC</option>
+                <option value="ETH">ETH</option>
+                <option value="SOL">SOL</option>
+                <option value="XRP">XRP</option>
+                <option value="ADA">ADA</option>
+                <option value="DOGE">DOGE</option>
+              </select>
+            </div>
+
+            <div class="field field-action">
+              <button type="submit" class="btn btn-primary btn-block">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Criar meta
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Minhas metas</h2>
+              <p id="metasContador">0 metas</p>
+            </div>
+          </div>
+
+          <div class="metas-grid" id="metasContainer"></div>
+        </div>
+      </section>
+
+      <!-- ==============================
+           ABA: GRÁFICOS
+      =============================== -->
+      <section class="aba" id="abaGraficos">
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>Período de análise</h2>
+              <p>Os gráficos refletem o período selecionado</p>
+            </div>
+            <div class="panel-actions">
+              <button type="button" class="btn btn-ghost" id="btnGraficoMesAtual">Mês atual</button>
+              <button type="button" class="btn btn-ghost" id="btnGraficoUltimos3">3 meses</button>
+              <button type="button" class="btn btn-ghost" id="btnGraficoUltimos6">6 meses</button>
+              <button type="button" class="btn btn-ghost" id="btnGraficoAno">Ano</button>
+            </div>
+          </div>
+
+          <div class="filter-grid filter-grid-3" style="padding: 0 24px 22px;">
+            <div class="filter-group">
+              <label>Data início</label>
+              <input type="date" id="graficoDataInicio">
+            </div>
+            <div class="filter-group">
+              <label>Data fim</label>
+              <input type="date" id="graficoDataFim">
+            </div>
+            <div class="filter-group">
+              <label>&nbsp;</label>
+              <button type="button" class="btn btn-primary" id="btnGraficoAplicar">Aplicar período</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics-grid metrics-graficos">
+          <div class="metric-card" data-metric="gSaldo">
+            <div class="metric-label">Saldo do período</div>
+            <div class="metric-value" id="graficoSaldo">R$ 0,00</div>
+          </div>
+
+          <div class="metric-card" data-metric="gEntradas">
+            <div class="metric-label">Entradas</div>
+            <div class="metric-value" id="graficoEntradas">R$ 0,00</div>
+          </div>
+
+          <div class="metric-card" data-metric="gSaidas">
+            <div class="metric-label">Saídas</div>
+            <div class="metric-value" id="graficoSaidas">R$ 0,00</div>
+          </div>
+
+          <div class="metric-card" data-metric="gCripto">
+            <div class="metric-label">Cripto (valor atual)</div>
+            <div class="metric-value" id="graficoCripto">R$ 0,00</div>
+          </div>
+
+          <div class="metric-card" data-metric="gFatura">
+            <div class="metric-label">Fatura total</div>
+            <div class="metric-value" id="graficoFatura">R$ 0,00</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="panel chart-panel">
+            <div class="panel-head"><div><h2>Gastos por categoria</h2><p>Inclui benefícios e modalidades</p></div></div>
+            <div class="chart-wrapper"><canvas id="chartCategorias"></canvas></div>
+          </div>
+
+          <div class="panel chart-panel">
+            <div class="panel-head"><div><h2>Gastos por banco</h2><p>Total gasto em cada banco</p></div></div>
+            <div class="chart-wrapper"><canvas id="chartBancos"></canvas></div>
+          </div>
+
+          <div class="panel chart-panel">
+            <div class="panel-head"><div><h2>Evolução mensal</h2><p>Entradas vs Saídas (últimos 6 meses)</p></div></div>
+            <div class="chart-wrapper"><canvas id="chartEvolucao"></canvas></div>
+          </div>
+
+          <div class="panel chart-panel">
+            <div class="panel-head"><div><h2>Carteira cripto</h2><p>Distribuição por moeda</p></div></div>
+            <div class="chart-wrapper"><canvas id="chartCripto"></canvas></div>
+          </div>
+
+          <div class="panel chart-panel">
+            <div class="panel-head"><div><h2>Fatura por banco</h2><p>Compras no crédito do período</p></div></div>
+            <div class="chart-wrapper"><canvas id="chartFatura"></canvas></div>
+          </div>
+
+          <div class="panel chart-panel">
+            <div class="panel-head"><div><h2>Benefícios</h2><p>Saldo atual de cada cartão</p></div></div>
+            <div class="chart-wrapper"><canvas id="chartBeneficios"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div> <!-- /#app -->
+</div> <!-- /#telaApp -->
 
 <!-- MODAL: EDITAR LANÇAMENTO -->
 <div id="modalEditar" class="modal">
   <div class="modal-content">
     <div class="modal-head">
-      <div><h2>Editar lançamento</h2><p>Atualize as informações abaixo</p></div>
+      <div>
+        <h2>Editar lançamento</h2>
+        <p>Atualize as informações abaixo</p>
+      </div>
       <button class="icon-btn fechar-modal" aria-label="Fechar">×</button>
     </div>
 
@@ -1172,10 +1373,12 @@
         <label for="editarDescricao">Descrição</label>
         <input type="text" id="editarDescricao" required>
       </div>
+
       <div class="field">
         <label for="editarValor">Valor</label>
         <input type="number" id="editarValor" step="0.01" required>
       </div>
+
       <div class="field">
         <label for="editarTipo">Tipo</label>
         <select id="editarTipo" required>
@@ -1184,18 +1387,24 @@
           <option value="saida">Saída</option>
         </select>
       </div>
+
       <div class="field">
         <label for="editarBanco">Banco</label>
         <select id="editarBanco"><option value="">Nenhum</option></select>
       </div>
+
       <div class="field">
         <label for="editarModalidade">Modalidade</label>
-        <select id="editarModalidade" required><option value="">Selecione</option></select>
+        <select id="editarModalidade" required>
+          <option value="">Selecione</option>
+        </select>
       </div>
+
       <div class="field field-span-2">
         <label for="editarData">Data</label>
         <input type="date" id="editarData" required>
       </div>
+
       <div class="modal-actions field-span-2">
         <button type="button" class="btn btn-ghost btn-cancelar">Cancelar</button>
         <button type="submit" class="btn btn-primary">Salvar alterações</button>
@@ -1208,15 +1417,16 @@
 <div id="telaPerfil" class="modal">
   <div class="modal-content">
     <div class="modal-head">
-      <div><h2>Meu perfil</h2><p>Gerencie suas preferências</p></div>
+      <div>
+        <h2>Meu perfil</h2>
+        <p>Gerencie suas preferências</p>
+      </div>
       <button class="icon-btn fechar-modal" data-close="telaPerfil" aria-label="Fechar">×</button>
     </div>
 
     <div class="perfil-actions">
       <button class="btn btn-ghost btn-block" onclick="abrirConfiguracoes()">⚙️ Editar configurações</button>
       <button class="btn btn-ghost btn-block" onclick="abrirPersonalizacaoCores()">🎨 Personalizar cores</button>
-      <button class="btn btn-ghost btn-block" onclick="migrarDadosLocalStorage()">☁️ Migrar dados do navegador</button>
-      <button class="btn btn-ghost btn-block" onclick="sincronizarManual()">🔄 Sincronizar agora</button>
     </div>
 
     <div id="perfilInfo" class="perfil-info"></div>
@@ -1227,7 +1437,10 @@
 <div id="telaCores" class="modal">
   <div class="modal-content modal-content-wide">
     <div class="modal-head">
-      <div><h2>Personalizar cores</h2><p>Escolha as cores dos cartões e indicadores</p></div>
+      <div>
+        <h2>Personalizar cores</h2>
+        <p>Escolha as cores dos cartões e indicadores</p>
+      </div>
       <button class="icon-btn fechar-modal" data-close="telaCores" aria-label="Fechar">×</button>
     </div>
 
@@ -1253,7 +1466,7 @@
 
       <section class="config-block">
         <h3>Criptomoedas</h3>
-        <p class="config-hint">As cores são aplicadas aos cartões de cada moeda</p>
+        <p class="config-hint">As cores são aplicadas aos cartões de cada moeda na aba Criptos</p>
         <div id="listaCoresCriptos" class="color-list"></div>
       </section>
 
@@ -1267,13 +1480,11 @@
 
 <div id="toastContainer" class="toast-container"></div>
 
-<script type="module" src="firebase-config.js"></script>
-<script type="module" src="firebase-service.js"></script>
-<script src="script.js" defer></script>
-<script src="criptos.js" defer></script>
-<script src="parcelas.js" defer></script>
-<script src="recorrentes.js" defer></script>
-<script src="metas.js" defer></script>
-<script src="graficos.js" defer></script>
+<script src="script.js"></script>
+<script src="criptos.js"></script>
+<script src="parcelas.js"></script>
+<script src="recorrentes.js"></script>
+<script src="metas.js"></script>
+<script src="graficos.js"></script>
 </body>
 </html>
