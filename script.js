@@ -4,6 +4,17 @@
 ========================================================= */
 
 /* =========================================================
+   ESPERA O FIREBASE CARREGAR
+========================================================= */
+
+function esperarFirebase() {
+  return new Promise((resolve) => {
+    if (window.firebaseReady) return resolve();
+    window.addEventListener("firebase-ready", () => resolve(), { once: true });
+  });
+}
+
+/* =========================================================
    ESTADO GLOBAL
 ========================================================= */
 
@@ -147,7 +158,7 @@ function alternarTema() {
 }
 
 /* =========================================================
-   NAVEGAÇÃO ENTRE TELAS  ← ALTERADO
+   NAVEGAÇÃO ENTRE TELAS
 ========================================================= */
 
 function mostrarTela(id) {
@@ -1121,15 +1132,22 @@ function atualizarTudo() {
 }
 
 /* =========================================================
-   INICIALIZAÇÃO
+   INICIALIZAÇÃO — espera o Firebase antes de tudo
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const temaSalvo = localStorage.getItem(THEME_KEY) || "dark";
   aplicarTema(temaSalvo);
 
   const campoData = $("data");
   if (campoData) campoData.value = dataHoje();
+
+  // 🔥 Espera o Firebase carregar antes de continuar
+  await esperarFirebase();
+
+  console.log("✅ Firebase pronto, iniciando app...");
+  console.log("   Auth:", typeof window.firebaseAuth);
+  console.log("   DB:", typeof window.firebaseDB);
 
   verificarLogin();
 });
