@@ -269,7 +269,7 @@
 </div>
 
 <!-- ========================================================
-     TELA: APP PRINCIPAL  ← AGORA ENVOLVIDO EM .screen
+     TELA: APP PRINCIPAL
 ========================================================= -->
 <div id="telaApp" class="screen">
   <div id="app" class="app">
@@ -1480,11 +1480,18 @@
 
 <div id="toastContainer" class="toast-container"></div>
 
-<script src="script.js"></script>
-<script src="criptos.js"></script>
-<script src="parcelas.js"></script>
-<script src="recorrentes.js"></script>
-<script src="metas.js"></script>
-<script src="graficos.js"></script>
+<!-- =========================================================
+     SCRIPTS — ordem importa!
+     1) firebase-config.js  (módulo, carrega o SDK)
+     2) script.js           (módulo, espera firebase-ready)
+     3) demais módulos
+========================================================= -->
+<script type="module" src="firebase-config.js"></script>
+<script type="module" src="script.js"></script>
+<script type="module" src="criptos.js"></script>
+<script type="module" src="parcelas.js"></script>
+<script type="module" src="recorrentes.js"></script>
+<script type="module" src="metas.js"></script>
+<script type="module" src="graficos.js"></script>
 </body>
 </html>
