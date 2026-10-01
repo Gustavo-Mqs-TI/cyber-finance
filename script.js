@@ -180,36 +180,44 @@ function mostrarApp() {
    LOGIN / REGISTRO / RECUPERAR
 ========================================================= */
 
-if (usuarios.length === 0) {
-  usuarios.push({
-    id: 1,
-    nome: "Usuário Demo",
-    email: "demo@financeiro.com",
-    senha: "123456",
-  });
-  localStorage.setItem("financa_usuarios", JSON.stringify(usuarios));
-}
-
-function salvarUsuarios() {
-  localStorage.setItem("financa_usuarios", JSON.stringify(usuarios));
-}
-
-$("formLogin").addEventListener("submit", (e) => {
+$("formLogin").addEventListener("submit", async (e) => {
   e.preventDefault();
+
   const email = $("loginEmail").value.trim();
   const senha = $("loginSenha").value;
 
-  const user = usuarios.find((u) => u.email === email && u.senha === senha);
-  if (!user) {
-    toast("E-mail ou senha incorretos", "error");
+  if (!email || !senha) {
+    toast("Preencha o e-mail e a senha", "error");
     return;
   }
 
-  usuarioLogado = { id: user.id, nome: user.nome, email: user.email };
-  sessionStorage.setItem("financa_usuario", JSON.stringify(usuarioLogado));
+  try {
+    const user = await window.fbLogin(email, senha);
 
-  toast(`Bem-vindo, ${user.nome.split(" ")[0]}!`, "success");
-  iniciarSessao();
+    usuarioLogado = {
+      uid: user.uid,
+      nome: user.displayName || "Usuário",
+      email: user.email,
+    };
+
+    toast(`Bem-vindo, ${usuarioLogado.nome.split(" ")[0]}!`, "success");
+
+    iniciarSessao();
+  } catch (error) {
+    console.error("Erro no login Firebase:", error);
+
+    if (
+      error.code === "auth/invalid-credential" ||
+      error.code === "auth/wrong-password" ||
+      error.code === "auth/user-not-found"
+    ) {
+      toast("E-mail ou senha incorretos", "error");
+    } else if (error.code === "auth/too-many-requests") {
+      toast("Muitas tentativas. Aguarde alguns minutos.", "error");
+    } else {
+      toast("Não foi possível realizar o login", "error");
+    }
+  }
 });
 
 $("formRegistro").addEventListener("submit", (e) => {
