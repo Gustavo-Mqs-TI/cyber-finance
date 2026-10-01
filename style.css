@@ -124,11 +124,29 @@ a { color: inherit; text-decoration: none; }
 svg { display: block; }
 
 /* =========================================================
-   HELPERS
+   HELPERS + CONTROLE DE TELAS  ← ALTERADO AQUI
 ========================================================= */
 
 .screen { display: none; }
 .screen.active { display: block; }
+
+/* Trava a rolagem quando o usuário está em telas de autenticação
+   (login, registro, recuperar, configuração) */
+body.auth-mode {
+  overflow: hidden;
+  height: 100vh;
+}
+
+body.auth-mode .screen.active {
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* A tela do app ocupa o viewport todo */
+#telaApp.screen.active {
+  display: block;
+  min-height: 100vh;
+}
 
 .aba { display: none; }
 .aba.active { display: block; animation: fadeUp 0.3s ease; }
@@ -242,7 +260,6 @@ select {
   outline: none;
   transition: all var(--t);
 
-  /* Remove aparência nativa */
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -294,31 +311,25 @@ select#filtroOrdenar {
   padding-right: 38px !important;
 }
 
-/* Seta customizada — tema escuro */
 select,
 [data-theme="dark"] select {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
 }
 
-/* Seta customizada — tema claro (mais escura) */
 [data-theme="light"] select {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
 }
 
-/* Esconde seta nativa no IE/Edge legado */
 select::-ms-expand { display: none !important; }
 
-/* Firefox — evita foco estranho */
 select:-moz-focusring {
   color: transparent;
   text-shadow: 0 0 0 var(--text);
 }
 
-/* Data — color-scheme correto */
 input[type="date"] { color-scheme: dark; }
 [data-theme="light"] input[type="date"] { color-scheme: light; }
 
-/* Esconde spinners de input number */
 input[type="number"] { -moz-appearance: textfield; }
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
@@ -596,15 +607,14 @@ input[type="number"]::-webkit-inner-spin-button {
 .config-actions { margin-top: 8px; }
 
 /* =========================================================
-   APP LAYOUT
+   APP LAYOUT  ← ALTERADO AQUI
 ========================================================= */
 
 .app {
-  display: none;
+  display: grid;
+  grid-template-columns: 260px 1fr;
   min-height: 100vh;
 }
-
-.app.active { display: grid; grid-template-columns: 260px 1fr; }
 
 /* SIDEBAR */
 .sidebar {
@@ -757,7 +767,6 @@ input[type="number"]::-webkit-inner-spin-button {
   color: var(--text-dim);
 }
 
-/* Toggle de ícones no botão de tema */
 #btnTema .icon-moon,
 #btnTema .icon-sun {
   width: 18px;
@@ -1444,118 +1453,6 @@ input[type="number"]::-webkit-inner-spin-button {
 .toast.error { border-left-color: var(--danger); }
 .toast.warning { border-left-color: var(--warning); }
 
-
-/* =========================================================
-   MÓDULO CRIPTOS
-========================================================= */
-
-/* Cards de resumo da aba Criptos */
-.metrics-criptos .metric-card[data-metric="investido"]::before {
-  background: var(--primary);
-}
-.metrics-criptos .metric-card[data-metric="valorAtual"]::before {
-  background: var(--success);
-}
-.metrics-criptos .metric-card[data-metric="lucroPrejuizo"]::before {
-  background: var(--warning);
-}
-.metrics-criptos .metric-card[data-metric="rentabilidade"]::before {
-  background: linear-gradient(90deg, var(--success), var(--danger));
-}
-
-.metrics-criptos .metric-value {
-  font-size: 20px;
-}
-
-/* Botão readonly no formulário */
-.readonly-field {
-  background: var(--surface-2) !important;
-  color: var(--text-muted) !important;
-  cursor: not-allowed;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  letter-spacing: -0.02em;
-}
-
-/* Ações do panel-head (exportar/importar) */
-.panel-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.panel-actions .btn {
-  padding: 7px 12px;
-  font-size: 12.5px;
-  gap: 6px;
-}
-
-.panel-actions .btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-/* Cards de cripto */
-#criptoCards .beneficio-card {
-  min-height: 150px;
-}
-
-#criptoCards .card-line {
-  font-size: 12.5px;
-}
-
-#criptoCards .card-line strong {
-  font-size: 14px;
-}
-
-#criptoCards .card-hint {
-  font-size: 10.5px;
-  opacity: 0.85;
-}
-
-/* Tabela Criptos — colunas mais compactas */
-#abaCriptos .data-table {
-  font-size: 12.5px;
-}
-
-#abaCriptos .data-table thead th {
-  padding: 10px 12px;
-  font-size: 10.5px;
-}
-
-#abaCriptos .data-table tbody td {
-  padding: 11px 12px;
-}
-
-#abaCriptos .valor-cell {
-  font-size: 12.5px;
-}
-
-/* Mobile: ajustes específicos da aba Criptos */
-@media (max-width: 640px) {
-  .metrics-criptos {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  .metrics-criptos .metric-value {
-    font-size: 14px;
-  }
-
-  .panel-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .panel-actions .btn {
-    font-size: 11.5px;
-    padding: 6px 10px;
-  }
-
-  #abaCriptos .data-table td[data-label]::before {
-    content: attr(data-label);
-  }
-}
-
 /* =========================================================
    MÓDULO CRIPTOS
 ========================================================= */
@@ -1605,7 +1502,6 @@ input[type="number"]::-webkit-inner-spin-button {
 
 #criptoCards .beneficio-card {
   min-height: 150px;
-  transition: transform var(--t), box-shadow var(--t);
 }
 
 #criptoCards .card-line {
@@ -1683,7 +1579,7 @@ input[type="number"]::-webkit-inner-spin-button {
 ========================================================= */
 
 @media (max-width: 1024px) {
-  .app.active { grid-template-columns: 1fr; }
+  .app { grid-template-columns: 1fr; }
 
   .sidebar {
     position: fixed;
@@ -1750,10 +1646,8 @@ input[type="number"]::-webkit-inner-spin-button {
 ========================================================= */
 
 @media (max-width: 640px) {
-  /* Layout base */
   .content { padding: 20px 16px 120px; }
 
-  /* TOPBAR compacta */
   .topbar {
     gap: 12px;
     margin-bottom: 20px;
@@ -1783,11 +1677,9 @@ input[type="number"]::-webkit-inner-spin-button {
     font-size: 12px;
   }
 
-  /* Formulário */
   .grid-form { grid-template-columns: 1fr; }
   .field-span-2 { grid-column: span 1; }
 
-  /* Filtros */
   .filter-actions { flex-direction: column-reverse; }
   .filter-actions .btn { width: 100%; }
 
@@ -1799,7 +1691,6 @@ input[type="number"]::-webkit-inner-spin-button {
 
   .range-row span { text-align: center; }
 
-  /* MÉTRICAS — compactas lado a lado */
   .metrics-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
@@ -1834,19 +1725,16 @@ input[type="number"]::-webkit-inner-spin-button {
     word-break: break-word;
   }
 
-  /* Painéis */
   .panel-head { padding: 16px 18px; }
   .panel-body { padding: 18px; }
 
   .panel-head h2 { font-size: 15px; }
 
-  /* Auth */
   .auth-card { padding: 28px 22px; }
   .auth-card-wide { padding: 28px 22px; }
 
   .auth-heading h1 { font-size: 22px; }
 
-  /* Modal — bottom sheet */
   .modal { padding: 0; }
   .modal.active { align-items: flex-end; }
 
@@ -1863,10 +1751,8 @@ input[type="number"]::-webkit-inner-spin-button {
   .color-grid { grid-template-columns: 1fr; }
   .color-list { grid-template-columns: 1fr; }
 
-  /* Cards de benefícios/faturas */
   .cards-grid { grid-template-columns: 1fr; }
 
-  /* Toasts */
   .toast-container {
     left: 16px;
     right: 16px;
@@ -1874,10 +1760,6 @@ input[type="number"]::-webkit-inner-spin-button {
   }
 
   .toast { min-width: auto; }
-
-  /* =======================================================
-     TABELAS — viram cards empilhados
-  ======================================================= */
 
   .table-wrapper {
     overflow: visible;
@@ -1959,314 +1841,9 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 /* =========================================================
-   STATUS CLOUD (sincronização)
-========================================================= */
-
-.status-cloud {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-  margin-right: 8px;
-  transition: all var(--t);
-}
-
-.status-cloud .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--text-dim);
-  transition: background var(--t);
-}
-
-.status-cloud.online {
-  background: var(--success-soft);
-  border-color: rgba(16, 185, 129, 0.3);
-  color: var(--success);
-}
-.status-cloud.online .dot {
-  background: var(--success);
-  animation: pulse 2s infinite;
-}
-
-.status-cloud.syncing {
-  background: var(--primary-soft);
-  border-color: rgba(99, 102, 241, 0.3);
-  color: var(--primary);
-}
-.status-cloud.syncing .dot {
-  background: var(--primary);
-  animation: pulse 1s infinite;
-}
-
-.status-cloud.offline {
-  background: var(--danger-soft);
-  border-color: rgba(239, 68, 68, 0.3);
-  color: var(--danger);
-}
-.status-cloud.offline .dot {
-  background: var(--danger);
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.85); }
-}
-
-@media (max-width: 640px) {
-  .status-cloud {
-    padding: 4px 8px;
-    font-size: 10px;
-  }
-  .status-cloud .label {
-    display: none;
-  }
-}
-
-/* =========================================================
-   MÓDULO CRIPTOS
-========================================================= */
-
-.metrics-criptos .metric-card[data-metric="investido"]::before { background: var(--primary); }
-.metrics-criptos .metric-card[data-metric="valorAtual"]::before { background: var(--success); }
-.metrics-criptos .metric-card[data-metric="lucroPrejuizo"]::before { background: var(--warning); }
-.metrics-criptos .metric-card[data-metric="rentabilidade"]::before { background: linear-gradient(90deg, var(--success), var(--danger)); }
-
-.metrics-criptos .metric-value { font-size: 20px; }
-
-.readonly-field {
-  background: var(--surface-2) !important;
-  color: var(--text-muted) !important;
-  cursor: not-allowed;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  letter-spacing: -0.02em;
-}
-
-.panel-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.panel-actions .btn {
-  padding: 7px 12px;
-  font-size: 12.5px;
-  gap: 6px;
-}
-
-.panel-actions .btn svg {
-  width: 14px;
-  height: 14px;
-}
-
-#criptoCards .beneficio-card {
-  min-height: 150px;
-  transition: transform var(--t), box-shadow var(--t);
-}
-
-#criptoCards .card-line { font-size: 12.5px; }
-#criptoCards .card-line strong { font-size: 14px; }
-#criptoCards .card-hint { font-size: 10.5px; opacity: 0.85; }
-
-#abaCriptos .data-table { font-size: 12.5px; }
-#abaCriptos .data-table thead th { padding: 10px 12px; font-size: 10.5px; }
-#abaCriptos .data-table tbody td { padding: 11px 12px; }
-#abaCriptos .valor-cell { font-size: 12.5px; }
-
-/* =========================================================
-   MÓDULO PARCELAS / RECORRENTES / METAS / GRÁFICOS
-========================================================= */
-
-.metrics-parcelas .metric-card[data-metric="parcelasAtivas"]::before { background: var(--primary); }
-.metrics-parcelas .metric-card[data-metric="parcelasRestante"]::before { background: var(--warning); }
-.metrics-parcelas .metric-card[data-metric="parcelasMes"]::before { background: var(--danger); }
-
-.metrics-recorrentes .metric-card[data-metric="fixasSaidas"]::before { background: var(--danger); }
-.metrics-recorrentes .metric-card[data-metric="fixasEntradas"]::before { background: var(--success); }
-.metrics-recorrentes .metric-card[data-metric="fixasSaldo"]::before { background: var(--primary); }
-
-.metrics-graficos .metric-card[data-metric="gSaldo"]::before { background: var(--primary); }
-.metrics-graficos .metric-card[data-metric="gEntradas"]::before { background: var(--success); }
-.metrics-graficos .metric-card[data-metric="gSaidas"]::before { background: var(--danger); }
-.metrics-graficos .metric-card[data-metric="gCripto"]::before { background: #f7931a; }
-.metrics-graficos .metric-card[data-metric="gFatura"]::before { background: var(--warning); }
-
-.metrics-parcelas .metric-value,
-.metrics-recorrentes .metric-value,
-.metrics-graficos .metric-value { font-size: 20px; }
-
-/* Progress bar */
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: var(--surface-2);
-  border-radius: 999px;
-  overflow: hidden;
-  margin-top: 6px;
-}
-
-.progress-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.4s ease;
-  background: var(--primary);
-}
-
-.progress-bar-fill.success { background: var(--success); }
-.progress-bar-fill.warning { background: var(--warning); }
-.progress-bar-fill.danger { background: var(--danger); }
-
-/* Badge status */
-.status-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.status-badge.ativo { background: var(--primary-soft); color: var(--primary); }
-.status-badge.concluido { background: var(--success-soft); color: var(--success); }
-.status-badge.estourado { background: var(--danger-soft); color: var(--danger); }
-.status-badge.inativo { background: var(--surface-2); color: var(--text-dim); }
-
-/* Metas */
-.metas-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-  padding: 22px 24px;
-}
-
-.meta-card {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  transition: all var(--t);
-}
-
-.meta-card:hover {
-  border-color: var(--border-strong);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.meta-card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.meta-card-title {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.meta-card-type {
-  font-size: 11px;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-top: 3px;
-}
-
-.meta-card-values {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.meta-card-values strong {
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 600;
-  color: var(--text);
-}
-
-/* Gráficos */
-.charts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-  gap: 20px;
-}
-
-.chart-panel { min-height: 320px; }
-
-.chart-wrapper {
-  padding: 16px 20px 20px;
-  height: 280px;
-  position: relative;
-}
-
-.chart-wrapper canvas {
-  max-width: 100%;
-  max-height: 100%;
-}
-
-.config-hint {
-  font-size: 12px;
-  color: var(--text-dim);
-  margin-bottom: 12px;
-  margin-top: -4px;
-}
-
-/* Responsivo */
-@media (max-width: 1024px) {
-  .charts-grid { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 640px) {
-  .metrics-criptos,
-  .metrics-parcelas,
-  .metrics-recorrentes,
-  .metrics-graficos {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  .metrics-criptos .metric-value,
-  .metrics-parcelas .metric-value,
-  .metrics-recorrentes .metric-value,
-  .metrics-graficos .metric-value {
-    font-size: 13px;
-  }
-
-  .metas-grid { grid-template-columns: 1fr; }
-
-  .chart-wrapper {
-    height: 240px;
-    padding: 12px;
-  }
-
-  .panel-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .panel-actions .btn {
-    font-size: 11.5px;
-    padding: 6px 10px;
-  }
-}
-/* =========================================================
    NOVAS ABAS: PARCELAS, RECORRENTES, METAS, GRÁFICOS
 ========================================================= */
 
-/* Métricas específicas */
 .metrics-parcelas .metric-card[data-metric="parcelasAtivas"]::before { background: var(--primary); }
 .metrics-parcelas .metric-card[data-metric="parcelasRestante"]::before { background: var(--warning); }
 .metrics-parcelas .metric-card[data-metric="parcelasMes"]::before { background: var(--danger); }
@@ -2287,7 +1864,6 @@ input[type="number"]::-webkit-inner-spin-button {
   font-size: 20px;
 }
 
-/* Progress bar (parcelas e metas) */
 .progress-bar {
   width: 100%;
   height: 8px;
@@ -2308,7 +1884,6 @@ input[type="number"]::-webkit-inner-spin-button {
 .progress-bar-fill.warning { background: var(--warning); }
 .progress-bar-fill.danger { background: var(--danger); }
 
-/* Badge de status */
 .status-badge {
   display: inline-block;
   padding: 3px 10px;
@@ -2324,7 +1899,6 @@ input[type="number"]::-webkit-inner-spin-button {
 .status-badge.estourado { background: var(--danger-soft); color: var(--danger); }
 .status-badge.inativo { background: var(--surface-2); color: var(--text-dim); }
 
-/* Metas — grid de cards */
 .metas-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -2390,7 +1964,6 @@ input[type="number"]::-webkit-inner-spin-button {
   color: var(--text-muted);
 }
 
-/* Gráficos */
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
@@ -2412,7 +1985,6 @@ input[type="number"]::-webkit-inner-spin-button {
   max-height: 100%;
 }
 
-/* Responsivo */
 @media (max-width: 1024px) {
   .charts-grid {
     grid-template-columns: 1fr;
@@ -2435,10 +2007,6 @@ input[type="number"]::-webkit-inner-spin-button {
     padding: 12px;
   }
 }
-
-/* =========================================================
-   RESPONSIVO — MOBILE PEQUENO (≤380px)
-========================================================= */
 
 @media (max-width: 380px) {
   .content { padding: 16px 12px 120px; }
