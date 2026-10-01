@@ -1,4 +1,3 @@
-
 /* =========================================================
    FINANÇA — Controle Financeiro Pessoal
    Script completo
