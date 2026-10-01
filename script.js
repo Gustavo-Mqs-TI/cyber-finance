@@ -1,3 +1,16 @@
+
+Essas três crases `` ``` `` **são marcação do Markdown** — provavelmente você colou o código de um chat/notebook junto com a formatação. **Isso NÃO é JavaScript.** O navegador tenta interpretar `` `` ` `` `` como template literal e se perde.
+
+**É exatamente por isso que o erro aponta pra linha 107** (`return \`${d}/${m}/${y}\``): o parser abre uma crase lá na linha 1 (que veio do markdown), acha que o template literal nunca fecha, e quando chega na linha 107 com outro `` ` `` ele já está perdido.
+
+---
+
+## ✅ Solução: substituir o `script.js` no GitHub por esta versão limpa
+
+Apaga tudo o que tem no `script.js` do GitHub e cola **exatamente isso abaixo**. Vou te mandar o arquivo inteiro **já corrigido** — sem crases de markdown, sem bloco órfão, sem nada solto.
+
+⚠️ **IMPORTANTE:** Copie **a partir da linha `/* ====` e não inclua as crases `` ``` `` ** — se você copiar daqui do chat, o markdown pode colar junto. Se puder, copie pra um bloco de notas primeiro, salve como `.js`, e depois suba pro GitHub.
+
 ```javascript
 /* =========================================================
    FINANÇA — Controle Financeiro Pessoal
@@ -458,7 +471,7 @@ $("formRecuperar").addEventListener(
     }
   }
 );
-```
+
 /* =========================================================
    CONFIGURAÇÃO INICIAL
 ========================================================= */
