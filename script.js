@@ -493,6 +493,7 @@ async function iniciarSessao() {
   const jaConfigurado = await carregarConfiguracoes();
   await carregarTransacoes();
   await carregarCores();
+  await carregarFaturasSalvas();   // 🔔 NOVO
 
   if (!jaConfigurado) {
     mostrarTela("telaConfiguracao");
@@ -1252,6 +1253,239 @@ $("btnLimparFiltroFatura").addEventListener("click", () => {
   limparFiltrosFaturaUI();
   if (bancoSelecionadoFatura) renderTabelaFatura(comprasOriginais);
 });
+
+/* =========================================================
+   FATURAS — Motor de cálculo
+========================================================= */
+
+let faturasSalvas = {}; // { "Nubank_2026-10": { status, valorFechado, ... }, ... }
+
+/* Helpers de data */
+function mesAtualRef() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function nomeMesAno(ref) {
+  // "2026-10" → "Outubro/2026"
+  const [ano, mes] = ref.split("-").map(Number);
+  const meses = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+  return `${meses[mes - 1]}/${ano}`;
+}
+
+function mesAnoCurto(ref) {
+  // "2026-10" → "Out/2026"
+  const [ano, mes] = ref.split("-").map(Number);
+  const meses = [
+    "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+    "Jul", "Ago", "Set", "Out", "Nov", "Dez"
+  ];
+  return `${meses[mes - 1]}/${ano}`;
+}
+
+/* Retorna a chave de uma fatura: "Nubank_2026-10" */
+function chaveFatura(banco, mes) {
+  return `${banco}_${mes}`;
+}
+
+/* Retorna as compras à vista no crédito de um banco num mês */
+function comprasCreditoDoMes(banco, mes) {
+  return transacoes.filter((t) => {
+    return (
+      t.banco === banco &&
+      t.modalidade === "Crédito" &&
+      t.tipo === "saida" &&
+      t.data &&
+      t.data.startsWith(mes)
+    );
+  });
+}
+
+/* Retorna as parcelas de um banco num mês (usa window.parcelasDoMes) */
+function parcelasDoMesBanco(banco, mes) {
+  if (typeof window.parcelasDoMes !== "function") return [];
+  return window.parcelasDoMes(mes).filter((p) => p.banco === banco);
+}
+
+/* Retorna TODOS os itens (compras + parcelas) de um banco num mês */
+function itensFatura(banco, mes) {
+  const compras = comprasCreditoDoMes(banco, mes).map((t) => ({
+    tipo: "compra",
+    descricao: t.descricao,
+    valor: t.valor,
+    data: t.data,
+  }));
+
+  const parcelas = parcelasDoMesBanco(banco, mes).map((p) => ({
+    tipo: "parcela",
+    descricao: `${p.descricao} (${p.numero}/${p.total})`,
+    valor: p.valor,
+    data: p.data,
+  }));
+
+  return [...compras, ...parcelas].sort(
+    (a, b) => new Date(a.data) - new Date(b.data)
+  );
+}
+
+/* Calcula o total dinâmico de uma fatura (soma tudo, sem congelar) */
+function totalFaturaDinamico(banco, mes) {
+  return itensFatura(banco, mes).reduce((s, i) => s + i.valor, 0);
+}
+
+/* Retorna o status de uma fatura: "futura" | "aberta" | "fechada" | "paga" */
+function statusFatura(banco, mes) {
+  const chave = chaveFatura(banco, mes);
+  const salva = faturasSalvas[chave];
+  if (salva && salva.status) return salva.status;
+
+  const mesAtual = mesAtualRef();
+  if (mes > mesAtual) return "futura";
+  if (mes === mesAtual) return "aberta";
+  return "aberta"; // meses passados sem registro = aberta (retroativo)
+}
+
+/* Retorna o total a exibir:
+   - Se fatura está fechada/paga: valorFechado
+   - Se aberta/futura: cálculo dinâmico */
+function totalFaturaExibir(banco, mes) {
+  const chave = chaveFatura(banco, mes);
+  const salva = faturasSalvas[chave];
+  const st = statusFatura(banco, mes);
+
+  if ((st === "fechada" || st === "paga") && salva && salva.valorFechado != null) {
+    return salva.valorFechado;
+  }
+  return totalFaturaDinamico(banco, mes);
+}
+
+/* Detecta se há compras/parcelas adicionadas após o fechamento */
+function temComprasAposFechamento(banco, mes) {
+  const chave = chaveFatura(banco, mes);
+  const salva = faturasSalvas[chave];
+  if (!salva) return false;
+  if (salva.status !== "fechada" && salva.status !== "paga") return false;
+
+  const totalAtual = totalFaturaDinamico(banco, mes);
+  const totalCongelado = salva.valorFechado || 0;
+  return totalAtual > totalCongelado + 0.01;
+}
+
+/* Lista todos os meses que têm movimentação OU estão salvos pra um banco */
+function mesesFatura(banco) {
+  const meses = new Set();
+
+  // Compras à vista no crédito
+  transacoes.forEach((t) => {
+    if (
+      t.banco === banco &&
+      t.modalidade === "Crédito" &&
+      t.tipo === "saida" &&
+      t.data
+    ) {
+      meses.add(t.data.substring(0, 7));
+    }
+  });
+
+  // Parcelas
+  if (typeof window.parcelasGetTodas === "function") {
+    window.parcelasGetTodas().forEach((c) => {
+      if (c.banco !== banco) return;
+      // Gera os meses de cada parcela
+      const [y, m, d] = c.dataPrimeira.split("-").map(Number);
+      for (let i = 0; i < c.numeroParcelas; i++) {
+        const dt = new Date(y, m - 1 + i, d);
+        const ref = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+        meses.add(ref);
+      }
+    });
+  }
+
+  // Faturas salvas (fechadas/pagas)
+  Object.keys(faturasSalvas).forEach((chave) => {
+    const [b, mes] = chave.split("_");
+    if (b === banco) meses.add(mes);
+  });
+
+  return [...meses].sort();
+}
+
+/* Pega a fatura "atual" pra exibir no card do banco */
+function faturaAtualDoBanco(banco) {
+  const mesAtual = mesAtualRef();
+
+  // Se tem fatura salva no mês atual, usa ela
+  if (faturasSalvas[chaveFatura(banco, mesAtual)]) {
+    return mesAtual;
+  }
+
+  // Senão, verifica se tem movimentação no mês atual
+  const itens = itensFatura(banco, mesAtual);
+  if (itens.length > 0) return mesAtual;
+
+  // Senão, procura o próximo mês com movimentação (futuro)
+  const todosMeses = mesesFatura(banco);
+  const futuro = todosMeses.find((m) => m >= mesAtual);
+  if (futuro) return futuro;
+
+  // Senão, retorna o último mês com movimentação
+  const ultimo = todosMeses[todosMeses.length - 1];
+  if (ultimo) return ultimo;
+
+  // Sem nada, retorna o mês atual
+  return mesAtual;
+}
+
+/* Carrega todas as faturas salvas do usuário */
+async function carregarFaturasSalvas() {
+  if (!usuarioLogado) return;
+  try {
+    const arr = await window.fbCarregarColecao(usuarioLogado.uid, "faturas");
+    faturasSalvas = {};
+    arr.forEach((f) => {
+      faturasSalvas[chaveFatura(f.banco, f.mes)] = f;
+    });
+    console.log("📄 Faturas salvas carregadas:", Object.keys(faturasSalvas).length);
+  } catch (e) {
+    console.warn("Erro ao carregar faturas salvas:", e);
+  }
+}
+
+/* Salva uma fatura no Firestore */
+async function salvarFatura(banco, mes, dados) {
+  if (!usuarioLogado) return false;
+  const chave = chaveFatura(banco, mes);
+  const docId = chave.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const ok = await window.fbSalvarDoc(
+    usuarioLogado.uid,
+    dados,
+    "faturas",
+    docId
+  );
+  if (ok) {
+    faturasSalvas[chave] = { ...dados, banco, mes };
+  }
+  return ok;
+}
+
+/* Expor globalmente pra debug e uso futuro */
+window.mesAtualRef = mesAtualRef;
+window.nomeMesAno = nomeMesAno;
+window.mesAnoCurto = mesAnoCurto;
+window.itensFatura = itensFatura;
+window.totalFaturaDinamico = totalFaturaDinamico;
+window.totalFaturaExibir = totalFaturaExibir;
+window.statusFatura = statusFatura;
+window.temComprasAposFechamento = temComprasAposFechamento;
+window.mesesFatura = mesesFatura;
+window.faturaAtualDoBanco = faturaAtualDoBanco;
+window.carregarFaturasSalvas = carregarFaturasSalvas;
+window.salvarFatura = salvarFatura;
+window.getFaturasSalvas = () => faturasSalvas;
+
 
 /* =========================================================
    ATUALIZAÇÃO GERAL
