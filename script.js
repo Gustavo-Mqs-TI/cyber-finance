@@ -325,7 +325,6 @@ async function carregarConfiguracoes() {
 
 async function salvarTransacoes() {
   if (!usuarioLogado) return;
-  // Substitui a coleção inteira (simples e confiável)
   await window.fbSubstituirColecao(usuarioLogado.uid, "transacoes", transacoes);
 }
 
@@ -1288,6 +1287,46 @@ window.fecharTodosModais = fecharTodosModais;
 window.logout = logout;
 window.trocarAba = trocarAba;
 window.atualizarTudo = atualizarTudo;
+
+/* =========================================================
+   LISTENER — parcelas atualizadas
+========================================================= */
+
+window.addEventListener("parcelas-atualizadas", () => {
+  // Atualiza os cards de fatura (totais)
+  if (typeof renderFaturaCards === "function") {
+    renderFaturaCards();
+  }
+
+  // Se tem um banco selecionado, atualiza a lista de compras dele também
+  if (bancoSelecionadoFatura) {
+    const nome = bancoSelecionadoFatura;
+    const mesAtual = new Date().toISOString().substring(0, 7);
+
+    comprasOriginais = transacoes
+      .filter((t) => t.modalidade === "Crédito" && t.tipo === "saida" && t.banco === nome)
+      .sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    if (typeof window.parcelasDoMes === "function") {
+      const parcelas = window.parcelasDoMes(mesAtual).filter((p) => p.banco === nome);
+      parcelas.forEach((p) => {
+        comprasOriginais.push({
+          descricao: `${p.descricao} (${p.numero}/${p.total})`,
+          valor: p.valor,
+          banco: p.banco,
+          data: p.data,
+          modalidade: "Crédito",
+          _parcela: true,
+        });
+      });
+      comprasOriginais.sort((a, b) => new Date(b.data) - new Date(a.data));
+    }
+
+    if (typeof renderTabelaFatura === "function") {
+      renderTabelaFatura(comprasOriginais);
+    }
+  }
+});
 
 /* =========================================================
    INICIALIZAÇÃO

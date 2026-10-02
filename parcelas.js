@@ -210,7 +210,12 @@
     }).join("");
   }
 
-  function renderTudo() { renderResumo(); renderTabela(); }
+  /* 🔔 NOVO: renderTudo agora dispara evento pra atualizar a fatura */
+  function renderTudo() {
+    renderResumo();
+    renderTabela();
+    window.dispatchEvent(new Event("parcelas-atualizadas"));
+  }
 
   /* =========================================================
      FORMULÁRIO
