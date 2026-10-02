@@ -1,9 +1,12 @@
 /* =========================================================
-   FINANÇA — Serviço de comunicação com o Firebase
-   Fornece funções prontas para login, cadastro e CRUD
+   FINANÇA — Firebase Unificado
+   Init + Auth + Firestore (CRUD)
 ========================================================= */
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+
 import {
+  getAuth,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
@@ -13,64 +16,94 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 
 import {
-  collection,
+  getFirestore,
   doc,
   getDoc,
-  getDocs,
   setDoc,
+  getDocs,
   addDoc,
   updateDoc,
   deleteDoc,
-  query,
-  where,
+  collection,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+/* =========================================================
+   CONFIGURAÇÃO
+========================================================= */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAH9IoRx1g3byNjBr0BYBpLRXzmEQMiJdQ",
+  authDomain: "cyber-finance-58dc1.firebaseapp.com",
+  projectId: "cyber-finance-58dc1",
+  storageBucket: "cyber-finance-58dc1.firebasestorage.app",
+  messagingSenderId: "159965033336",
+  appId: "1:159965033336:web:69b5a62dbb7766da218e8d",
+  measurementId: "G-V5DL6GPE1B",
+};
+
+/* =========================================================
+   INICIALIZAÇÃO
+========================================================= */
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 /* =========================================================
    AUTENTICAÇÃO
 ========================================================= */
 
 async function fbCadastrar(email, senha, nome) {
-  const cred = await createUserWithEmailAndPassword(window.firebaseAuth, email, senha);
+  const cred = await createUserWithEmailAndPassword(auth, email, senha);
+
   if (nome) {
     await updateProfile(cred.user, { displayName: nome });
   }
-  // Cria documento de perfil no Firestore
-  await setDoc(doc(window.firebaseDB, "users", cred.user.uid, "perfil", "geral"), {
-    nome: nome || "",
-    email: email,
-    criadoEm: new Date().toISOString(),
-  });
+
+  try {
+    await setDoc(
+      doc(db, "users", cred.user.uid, "perfil", "geral"),
+      {
+        nome: nome || "",
+        email: email,
+        criadoEm: new Date().toISOString(),
+      }
+    );
+  } catch (e) {
+    console.warn("Erro ao criar perfil no Firestore:", e);
+  }
+
   return cred.user;
 }
 
 async function fbLogin(email, senha) {
-  const cred = await signInWithEmailAndPassword(window.firebaseAuth, email, senha);
+  const cred = await signInWithEmailAndPassword(auth, email, senha);
   return cred.user;
 }
 
 async function fbLogout() {
-  await signOut(window.firebaseAuth);
+  await signOut(auth);
 }
 
 async function fbRecuperarSenha(email) {
-  await sendPasswordResetEmail(window.firebaseAuth, email);
+  await sendPasswordResetEmail(auth, email);
 }
 
 function fbAoMudarUsuario(callback) {
-  onAuthStateChanged(window.firebaseAuth, callback);
+  onAuthStateChanged(auth, callback);
 }
 
 /* =========================================================
-   HELPERS DE DOCUMENTO
+   HELPERS DE REFERÊNCIA
 ========================================================= */
 
 function fbUserRef(uid, ...path) {
-  return doc(window.firebaseDB, "users", uid, ...path);
+  return doc(db, "users", uid, ...path);
 }
 
 function fbUserCol(uid, colecao) {
-  return collection(window.firebaseDB, "users", uid, colecao);
+  return collection(db, "users", uid, colecao);
 }
 
 /* =========================================================
@@ -78,6 +111,7 @@ function fbUserCol(uid, colecao) {
 ========================================================= */
 
 async function fbCarregarDoc(uid, ...path) {
+  if (!uid) return null;
   try {
     const snap = await getDoc(fbUserRef(uid, ...path));
     return snap.exists() ? snap.data() : null;
@@ -88,6 +122,7 @@ async function fbCarregarDoc(uid, ...path) {
 }
 
 async function fbSalvarDoc(uid, dados, ...path) {
+  if (!uid) return false;
   try {
     await setDoc(fbUserRef(uid, ...path), dados, { merge: true });
     return true;
@@ -102,6 +137,7 @@ async function fbSalvarDoc(uid, dados, ...path) {
 ========================================================= */
 
 async function fbCarregarColecao(uid, colecao) {
+  if (!uid) return [];
   try {
     const snap = await getDocs(fbUserCol(uid, colecao));
     const arr = [];
@@ -116,6 +152,7 @@ async function fbCarregarColecao(uid, colecao) {
 }
 
 async function fbAdicionarItem(uid, colecao, dados) {
+  if (!uid) return null;
   try {
     const ref = await addDoc(fbUserCol(uid, colecao), dados);
     return ref.id;
@@ -126,8 +163,12 @@ async function fbAdicionarItem(uid, colecao, dados) {
 }
 
 async function fbAtualizarItem(uid, colecao, docId, dados) {
+  if (!uid || !docId) return false;
   try {
-    await updateDoc(doc(window.firebaseDB, "users", uid, colecao, docId), dados);
+    await updateDoc(
+      doc(db, "users", uid, colecao, docId),
+      dados
+    );
     return true;
   } catch (e) {
     console.warn("fbAtualizarItem erro:", e);
@@ -136,8 +177,9 @@ async function fbAtualizarItem(uid, colecao, docId, dados) {
 }
 
 async function fbExcluirItem(uid, colecao, docId) {
+  if (!uid || !docId) return false;
   try {
-    await deleteDoc(doc(window.firebaseDB, "users", uid, colecao, docId));
+    await deleteDoc(doc(db, "users", uid, colecao, docId));
     return true;
   } catch (e) {
     console.warn("fbExcluirItem erro:", e);
@@ -145,21 +187,18 @@ async function fbExcluirItem(uid, colecao, docId) {
   }
 }
 
-/* Substitui a coleção inteira (útil pra sincronizar em massa) */
 async function fbSubstituirColecao(uid, colecao, itens) {
+  if (!uid) return false;
   try {
-    // Busca todos os docs atuais
     const snap = await getDocs(fbUserCol(uid, colecao));
-    const batch = writeBatch(window.firebaseDB);
+    const batch = writeBatch(db);
 
-    // Deleta os existentes
     snap.forEach((d) => {
       batch.delete(d.ref);
     });
 
-    // Adiciona os novos (com id próprio se houver)
     itens.forEach((item) => {
-      const ref = doc(fbUserCol(uid, colecao)); // gera id
+      const ref = doc(fbUserCol(uid, colecao));
       const dados = { ...item };
       delete dados._fbId;
       batch.set(ref, dados);
@@ -177,11 +216,16 @@ async function fbSubstituirColecao(uid, colecao, itens) {
    EXPORTA GLOBALMENTE
 ========================================================= */
 
+window.firebaseApp = app;
+window.firebaseAuth = auth;
+window.firebaseDB = db;
+
 window.fbCadastrar = fbCadastrar;
 window.fbLogin = fbLogin;
 window.fbLogout = fbLogout;
 window.fbRecuperarSenha = fbRecuperarSenha;
 window.fbAoMudarUsuario = fbAoMudarUsuario;
+
 window.fbCarregarDoc = fbCarregarDoc;
 window.fbSalvarDoc = fbSalvarDoc;
 window.fbCarregarColecao = fbCarregarColecao;
@@ -190,4 +234,20 @@ window.fbAtualizarItem = fbAtualizarItem;
 window.fbExcluirItem = fbExcluirItem;
 window.fbSubstituirColecao = fbSubstituirColecao;
 
-console.log("🔥 Serviço Firebase pronto");
+/* =========================================================
+   MARCA FIREBASE COMO PRONTO
+========================================================= */
+
+window.firebaseReady = true;
+window.dispatchEvent(new Event("firebase-ready"));
+
+/* =========================================================
+   DEBUG
+========================================================= */
+
+console.log("🔥 Firebase unificado pronto");
+console.log("   Auth:", typeof window.firebaseAuth);
+console.log("   DB:", typeof window.firebaseDB);
+console.log("   fbLogin:", typeof window.fbLogin);
+console.log("   fbCadastrar:", typeof window.fbCadastrar);
+console.log("   fbCarregarColecao:", typeof window.fbCarregarColecao);
