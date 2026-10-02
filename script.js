@@ -493,7 +493,7 @@ async function iniciarSessao() {
   const jaConfigurado = await carregarConfiguracoes();
   await carregarTransacoes();
   await carregarCores();
-  await carregarFaturasSalvas();   // 🔔 NOVO
+  await carregarFaturasSalvas();
 
   if (!jaConfigurado) {
     mostrarTela("telaConfiguracao");
@@ -540,6 +540,7 @@ async function logout() {
   transacoesOriginais = [];
   bancoSelecionadoFatura = null;
   comprasOriginais = [];
+  faturasSalvas = {};
 
   toast("Sessão encerrada", "info");
   mostrarTela("telaLogin");
@@ -943,31 +944,9 @@ function renderFaturaCards() {
 
 function filtrarBancoCredito(nome) {
   bancoSelecionadoFatura = nome;
-  const mesAtual = new Date().toISOString().substring(0, 7);
 
-  comprasOriginais = transacoes
-    .filter((t) => t.modalidade === "Crédito" && t.tipo === "saida" && t.banco === nome)
-    .sort((a, b) => new Date(b.data) - new Date(a.data));
-
-  if (typeof window.parcelasDoMes === "function") {
-    const parcelas = window.parcelasDoMes(mesAtual).filter((p) => p.banco === nome);
-    parcelas.forEach((p) => {
-      comprasOriginais.push({
-        descricao: `${p.descricao} (${p.numero}/${p.total})`,
-        valor: p.valor,
-        banco: p.banco,
-        data: p.data,
-        modalidade: "Crédito",
-        _parcela: true,
-      });
-    });
-    comprasOriginais.sort((a, b) => new Date(b.data) - new Date(a.data));
-  }
-
-  $("tituloFaturaFiltro").textContent = nome;
-  $("filtroBancoAtivo").textContent = `${comprasOriginais.length} compras`;
-  limparFiltrosFaturaUI();
-  renderTabelaFatura(comprasOriginais);
+  // 🔔 Abre o modal de faturas do banco
+  abrirModalFaturas(nome);
 }
 
 function renderTabelaFatura(lista) {
@@ -1028,6 +1007,346 @@ function limparFiltrosFaturaUI() {
   $("filtroDescricao").value = "";
   $("filtroOrdenar").value = "data_desc";
 }
+
+/* =========================================================
+   FATURAS — Motor de cálculo
+========================================================= */
+
+let faturasSalvas = {}; // { "Nubank_2026-10": { status, valorFechado, ... }, ... }
+
+/* Helpers de data */
+function mesAtualRef() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function nomeMesAno(ref) {
+  const [ano, mes] = ref.split("-").map(Number);
+  const meses = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+  return `${meses[mes - 1]}/${ano}`;
+}
+
+function mesAnoCurto(ref) {
+  const [ano, mes] = ref.split("-").map(Number);
+  const meses = [
+    "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+    "Jul", "Ago", "Set", "Out", "Nov", "Dez"
+  ];
+  return `${meses[mes - 1]}/${ano}`;
+}
+
+function chaveFatura(banco, mes) {
+  return `${banco}_${mes}`;
+}
+
+function comprasCreditoDoMes(banco, mes) {
+  return transacoes.filter((t) => {
+    return (
+      t.banco === banco &&
+      t.modalidade === "Crédito" &&
+      t.tipo === "saida" &&
+      t.data &&
+      t.data.startsWith(mes)
+    );
+  });
+}
+
+function parcelasDoMesBanco(banco, mes) {
+  if (typeof window.parcelasDoMes !== "function") return [];
+  return window.parcelasDoMes(mes).filter((p) => p.banco === banco);
+}
+
+function itensFatura(banco, mes) {
+  const compras = comprasCreditoDoMes(banco, mes).map((t) => ({
+    tipo: "compra",
+    descricao: t.descricao,
+    valor: t.valor,
+    data: t.data,
+  }));
+
+  const parcelas = parcelasDoMesBanco(banco, mes).map((p) => ({
+    tipo: "parcela",
+    descricao: `${p.descricao} (${p.numero}/${p.total})`,
+    valor: p.valor,
+    data: p.data,
+  }));
+
+  return [...compras, ...parcelas].sort(
+    (a, b) => new Date(a.data) - new Date(b.data)
+  );
+}
+
+function totalFaturaDinamico(banco, mes) {
+  return itensFatura(banco, mes).reduce((s, i) => s + i.valor, 0);
+}
+
+function statusFatura(banco, mes) {
+  const chave = chaveFatura(banco, mes);
+  const salva = faturasSalvas[chave];
+  if (salva && salva.status) return salva.status;
+
+  const mesAtual = mesAtualRef();
+  if (mes > mesAtual) return "futura";
+  if (mes === mesAtual) return "aberta";
+  return "aberta";
+}
+
+function totalFaturaExibir(banco, mes) {
+  const chave = chaveFatura(banco, mes);
+  const salva = faturasSalvas[chave];
+  const st = statusFatura(banco, mes);
+
+  if ((st === "fechada" || st === "paga") && salva && salva.valorFechado != null) {
+    return salva.valorFechado;
+  }
+  return totalFaturaDinamico(banco, mes);
+}
+
+function temComprasAposFechamento(banco, mes) {
+  const chave = chaveFatura(banco, mes);
+  const salva = faturasSalvas[chave];
+  if (!salva) return false;
+  if (salva.status !== "fechada" && salva.status !== "paga") return false;
+
+  const totalAtual = totalFaturaDinamico(banco, mes);
+  const totalCongelado = salva.valorFechado || 0;
+  return totalAtual > totalCongelado + 0.01;
+}
+
+function mesesFatura(banco) {
+  const meses = new Set();
+
+  transacoes.forEach((t) => {
+    if (
+      t.banco === banco &&
+      t.modalidade === "Crédito" &&
+      t.tipo === "saida" &&
+      t.data
+    ) {
+      meses.add(t.data.substring(0, 7));
+    }
+  });
+
+  if (typeof window.parcelasGetTodas === "function") {
+    window.parcelasGetTodas().forEach((c) => {
+      if (c.banco !== banco) return;
+      const [y, m, d] = c.dataPrimeira.split("-").map(Number);
+      for (let i = 0; i < c.numeroParcelas; i++) {
+        const dt = new Date(y, m - 1 + i, d);
+        const ref = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+        meses.add(ref);
+      }
+    });
+  }
+
+  Object.keys(faturasSalvas).forEach((chave) => {
+    const idx = chave.lastIndexOf("_");
+    const b = chave.substring(0, idx);
+    const mes = chave.substring(idx + 1);
+    if (b === banco) meses.add(mes);
+  });
+
+  return [...meses].sort();
+}
+
+function faturaAtualDoBanco(banco) {
+  const mesAtual = mesAtualRef();
+
+  if (faturasSalvas[chaveFatura(banco, mesAtual)]) {
+    return mesAtual;
+  }
+
+  const itens = itensFatura(banco, mesAtual);
+  if (itens.length > 0) return mesAtual;
+
+  const todosMeses = mesesFatura(banco);
+  const futuro = todosMeses.find((m) => m >= mesAtual);
+  if (futuro) return futuro;
+
+  const ultimo = todosMeses[todosMeses.length - 1];
+  if (ultimo) return ultimo;
+
+  return mesAtual;
+}
+
+async function carregarFaturasSalvas() {
+  if (!usuarioLogado) return;
+  try {
+    const arr = await window.fbCarregarColecao(usuarioLogado.uid, "faturas");
+    faturasSalvas = {};
+    arr.forEach((f) => {
+      faturasSalvas[chaveFatura(f.banco, f.mes)] = f;
+    });
+    console.log("📄 Faturas salvas carregadas:", Object.keys(faturasSalvas).length);
+  } catch (e) {
+    console.warn("Erro ao carregar faturas salvas:", e);
+  }
+}
+
+async function salvarFatura(banco, mes, dados) {
+  if (!usuarioLogado) return false;
+  const chave = chaveFatura(banco, mes);
+  const docId = chave.replace(/[^a-zA-Z0-9_-]/g, "_");
+  const ok = await window.fbSalvarDoc(
+    usuarioLogado.uid,
+    dados,
+    "faturas",
+    docId
+  );
+  if (ok) {
+    faturasSalvas[chave] = { ...dados, banco, mes };
+  }
+  return ok;
+}
+
+window.mesAtualRef = mesAtualRef;
+window.nomeMesAno = nomeMesAno;
+window.mesAnoCurto = mesAnoCurto;
+window.itensFatura = itensFatura;
+window.totalFaturaDinamico = totalFaturaDinamico;
+window.totalFaturaExibir = totalFaturaExibir;
+window.statusFatura = statusFatura;
+window.temComprasAposFechamento = temComprasAposFechamento;
+window.mesesFatura = mesesFatura;
+window.faturaAtualDoBanco = faturaAtualDoBanco;
+window.carregarFaturasSalvas = carregarFaturasSalvas;
+window.salvarFatura = salvarFatura;
+window.getFaturasSalvas = () => faturasSalvas;
+
+/* =========================================================
+   FATURAS — Modal e renderização
+========================================================= */
+
+let faturaAbertaAtual = null;
+
+function labelStatusFatura(status) {
+  const map = {
+    futura: { label: "🔮 Futura", classe: "futura" },
+    aberta: { label: "🔓 Em aberto", classe: "aberta" },
+    fechada: { label: "🔒 Fechada", classe: "fechada" },
+    paga: { label: "✅ Paga", classe: "paga" },
+  };
+  return map[status] || map.aberta;
+}
+
+function abrirModalFaturas(banco) {
+  fecharTodosModais();
+  faturaAbertaAtual = null;
+
+  $("tituloModalFaturas").textContent = `Faturas — ${banco}`;
+  $("subtituloModalFaturas").textContent = `Histórico de faturas mensais`;
+
+  renderListaFaturas(banco);
+
+  $("modalFaturas").classList.add("active");
+}
+
+function renderListaFaturas(banco) {
+  const container = $("listaFaturas");
+  if (!container) return;
+
+  const meses = mesesFatura(banco);
+
+  if (meses.length === 0) {
+    container.innerHTML = `
+      <div class="fatura-vazia">
+        Nenhuma movimentação no crédito deste banco ainda.
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = meses.map((mes) => {
+    const st = statusFatura(banco, mes);
+    const total = totalFaturaExibir(banco, mes);
+    const itens = itensFatura(banco, mes);
+    const compras = itens.filter((i) => i.tipo === "compra").length;
+    const parcelas = itens.filter((i) => i.tipo === "parcela").length;
+    const chave = chaveFatura(banco, mes);
+    const salva = faturasSalvas[chave];
+    const badge = labelStatusFatura(st);
+    const expandido = faturaAbertaAtual === mes ? "expandido" : "";
+
+    const temComprasPos = temComprasAposFechamento(banco, mes);
+
+    let detalheExtra = "";
+    if (st === "paga" && salva?.dataPagamento) {
+      detalheExtra = ` · Paga em ${formatarData(salva.dataPagamento)}`;
+    } else if (st === "fechada" && salva?.dataFechamento) {
+      detalheExtra = ` · Fechada em ${formatarData(salva.dataFechamento)}`;
+    } else if (st === "futura") {
+      detalheExtra = " (estimado)";
+    }
+
+    let aviso = "";
+    if (temComprasPos) {
+      aviso = `
+        <div style="margin-top:8px;padding:8px 12px;background:var(--danger-soft);border-radius:var(--r-sm);font-size:12px;color:var(--danger);">
+          ⚠️ Há compras lançadas após o fechamento desta fatura.
+        </div>
+      `;
+    }
+
+    const itensHtml = itens.length
+      ? itens.map((i) => `
+          <div class="fatura-item">
+            <div class="fatura-item-desc">
+              ${escapeHtml(i.descricao)}
+              <small>${formatarData(i.data)} · ${i.tipo === "compra" ? "Compra" : "Parcela"}</small>
+            </div>
+            <div class="fatura-item-valor">${formatarMoeda(i.valor)}</div>
+          </div>
+        `).join("")
+      : `<div class="fatura-vazia">Sem itens nesta fatura.</div>`;
+
+    return `
+      <div class="fatura-card ${expandido}" data-mes="${mes}" data-banco="${escapeAttr(banco)}">
+        <div class="fatura-card-head" onclick="toggleFaturaCard('${escapeAttr(banco)}', '${mes}')">
+          <div class="fatura-card-info">
+            <div class="fatura-card-mes">
+              📅 ${nomeMesAno(mes)}
+              <span class="fatura-card-badge ${badge.classe}">${badge.label}</span>
+            </div>
+            <div class="fatura-card-valor">
+              ${formatarMoeda(total)}${detalheExtra}
+            </div>
+            <div class="fatura-card-detalhe">
+              Compras: ${compras} · Parcelas: ${parcelas}
+            </div>
+          </div>
+          <span class="fatura-card-arrow">▾</span>
+        </div>
+
+        <div class="fatura-card-body">
+          <div class="fatura-itens">
+            ${itensHtml}
+          </div>
+          <div class="fatura-item-total">
+            <span>TOTAL</span>
+            <span>${formatarMoeda(total)}</span>
+          </div>
+          ${aviso}
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function toggleFaturaCard(banco, mes) {
+  if (faturaAbertaAtual === mes) {
+    faturaAbertaAtual = null;
+  } else {
+    faturaAbertaAtual = mes;
+  }
+  renderListaFaturas(banco);
+}
+
+window.abrirModalFaturas = abrirModalFaturas;
+window.renderListaFaturas = renderListaFaturas;
+window.toggleFaturaCard = toggleFaturaCard;
 
 /* =========================================================
    CORES PERSONALIZADAS
@@ -1255,239 +1574,6 @@ $("btnLimparFiltroFatura").addEventListener("click", () => {
 });
 
 /* =========================================================
-   FATURAS — Motor de cálculo
-========================================================= */
-
-let faturasSalvas = {}; // { "Nubank_2026-10": { status, valorFechado, ... }, ... }
-
-/* Helpers de data */
-function mesAtualRef() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function nomeMesAno(ref) {
-  // "2026-10" → "Outubro/2026"
-  const [ano, mes] = ref.split("-").map(Number);
-  const meses = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-  ];
-  return `${meses[mes - 1]}/${ano}`;
-}
-
-function mesAnoCurto(ref) {
-  // "2026-10" → "Out/2026"
-  const [ano, mes] = ref.split("-").map(Number);
-  const meses = [
-    "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-    "Jul", "Ago", "Set", "Out", "Nov", "Dez"
-  ];
-  return `${meses[mes - 1]}/${ano}`;
-}
-
-/* Retorna a chave de uma fatura: "Nubank_2026-10" */
-function chaveFatura(banco, mes) {
-  return `${banco}_${mes}`;
-}
-
-/* Retorna as compras à vista no crédito de um banco num mês */
-function comprasCreditoDoMes(banco, mes) {
-  return transacoes.filter((t) => {
-    return (
-      t.banco === banco &&
-      t.modalidade === "Crédito" &&
-      t.tipo === "saida" &&
-      t.data &&
-      t.data.startsWith(mes)
-    );
-  });
-}
-
-/* Retorna as parcelas de um banco num mês (usa window.parcelasDoMes) */
-function parcelasDoMesBanco(banco, mes) {
-  if (typeof window.parcelasDoMes !== "function") return [];
-  return window.parcelasDoMes(mes).filter((p) => p.banco === banco);
-}
-
-/* Retorna TODOS os itens (compras + parcelas) de um banco num mês */
-function itensFatura(banco, mes) {
-  const compras = comprasCreditoDoMes(banco, mes).map((t) => ({
-    tipo: "compra",
-    descricao: t.descricao,
-    valor: t.valor,
-    data: t.data,
-  }));
-
-  const parcelas = parcelasDoMesBanco(banco, mes).map((p) => ({
-    tipo: "parcela",
-    descricao: `${p.descricao} (${p.numero}/${p.total})`,
-    valor: p.valor,
-    data: p.data,
-  }));
-
-  return [...compras, ...parcelas].sort(
-    (a, b) => new Date(a.data) - new Date(b.data)
-  );
-}
-
-/* Calcula o total dinâmico de uma fatura (soma tudo, sem congelar) */
-function totalFaturaDinamico(banco, mes) {
-  return itensFatura(banco, mes).reduce((s, i) => s + i.valor, 0);
-}
-
-/* Retorna o status de uma fatura: "futura" | "aberta" | "fechada" | "paga" */
-function statusFatura(banco, mes) {
-  const chave = chaveFatura(banco, mes);
-  const salva = faturasSalvas[chave];
-  if (salva && salva.status) return salva.status;
-
-  const mesAtual = mesAtualRef();
-  if (mes > mesAtual) return "futura";
-  if (mes === mesAtual) return "aberta";
-  return "aberta"; // meses passados sem registro = aberta (retroativo)
-}
-
-/* Retorna o total a exibir:
-   - Se fatura está fechada/paga: valorFechado
-   - Se aberta/futura: cálculo dinâmico */
-function totalFaturaExibir(banco, mes) {
-  const chave = chaveFatura(banco, mes);
-  const salva = faturasSalvas[chave];
-  const st = statusFatura(banco, mes);
-
-  if ((st === "fechada" || st === "paga") && salva && salva.valorFechado != null) {
-    return salva.valorFechado;
-  }
-  return totalFaturaDinamico(banco, mes);
-}
-
-/* Detecta se há compras/parcelas adicionadas após o fechamento */
-function temComprasAposFechamento(banco, mes) {
-  const chave = chaveFatura(banco, mes);
-  const salva = faturasSalvas[chave];
-  if (!salva) return false;
-  if (salva.status !== "fechada" && salva.status !== "paga") return false;
-
-  const totalAtual = totalFaturaDinamico(banco, mes);
-  const totalCongelado = salva.valorFechado || 0;
-  return totalAtual > totalCongelado + 0.01;
-}
-
-/* Lista todos os meses que têm movimentação OU estão salvos pra um banco */
-function mesesFatura(banco) {
-  const meses = new Set();
-
-  // Compras à vista no crédito
-  transacoes.forEach((t) => {
-    if (
-      t.banco === banco &&
-      t.modalidade === "Crédito" &&
-      t.tipo === "saida" &&
-      t.data
-    ) {
-      meses.add(t.data.substring(0, 7));
-    }
-  });
-
-  // Parcelas
-  if (typeof window.parcelasGetTodas === "function") {
-    window.parcelasGetTodas().forEach((c) => {
-      if (c.banco !== banco) return;
-      // Gera os meses de cada parcela
-      const [y, m, d] = c.dataPrimeira.split("-").map(Number);
-      for (let i = 0; i < c.numeroParcelas; i++) {
-        const dt = new Date(y, m - 1 + i, d);
-        const ref = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
-        meses.add(ref);
-      }
-    });
-  }
-
-  // Faturas salvas (fechadas/pagas)
-  Object.keys(faturasSalvas).forEach((chave) => {
-    const [b, mes] = chave.split("_");
-    if (b === banco) meses.add(mes);
-  });
-
-  return [...meses].sort();
-}
-
-/* Pega a fatura "atual" pra exibir no card do banco */
-function faturaAtualDoBanco(banco) {
-  const mesAtual = mesAtualRef();
-
-  // Se tem fatura salva no mês atual, usa ela
-  if (faturasSalvas[chaveFatura(banco, mesAtual)]) {
-    return mesAtual;
-  }
-
-  // Senão, verifica se tem movimentação no mês atual
-  const itens = itensFatura(banco, mesAtual);
-  if (itens.length > 0) return mesAtual;
-
-  // Senão, procura o próximo mês com movimentação (futuro)
-  const todosMeses = mesesFatura(banco);
-  const futuro = todosMeses.find((m) => m >= mesAtual);
-  if (futuro) return futuro;
-
-  // Senão, retorna o último mês com movimentação
-  const ultimo = todosMeses[todosMeses.length - 1];
-  if (ultimo) return ultimo;
-
-  // Sem nada, retorna o mês atual
-  return mesAtual;
-}
-
-/* Carrega todas as faturas salvas do usuário */
-async function carregarFaturasSalvas() {
-  if (!usuarioLogado) return;
-  try {
-    const arr = await window.fbCarregarColecao(usuarioLogado.uid, "faturas");
-    faturasSalvas = {};
-    arr.forEach((f) => {
-      faturasSalvas[chaveFatura(f.banco, f.mes)] = f;
-    });
-    console.log("📄 Faturas salvas carregadas:", Object.keys(faturasSalvas).length);
-  } catch (e) {
-    console.warn("Erro ao carregar faturas salvas:", e);
-  }
-}
-
-/* Salva uma fatura no Firestore */
-async function salvarFatura(banco, mes, dados) {
-  if (!usuarioLogado) return false;
-  const chave = chaveFatura(banco, mes);
-  const docId = chave.replace(/[^a-zA-Z0-9_-]/g, "_");
-  const ok = await window.fbSalvarDoc(
-    usuarioLogado.uid,
-    dados,
-    "faturas",
-    docId
-  );
-  if (ok) {
-    faturasSalvas[chave] = { ...dados, banco, mes };
-  }
-  return ok;
-}
-
-/* Expor globalmente pra debug e uso futuro */
-window.mesAtualRef = mesAtualRef;
-window.nomeMesAno = nomeMesAno;
-window.mesAnoCurto = mesAnoCurto;
-window.itensFatura = itensFatura;
-window.totalFaturaDinamico = totalFaturaDinamico;
-window.totalFaturaExibir = totalFaturaExibir;
-window.statusFatura = statusFatura;
-window.temComprasAposFechamento = temComprasAposFechamento;
-window.mesesFatura = mesesFatura;
-window.faturaAtualDoBanco = faturaAtualDoBanco;
-window.carregarFaturasSalvas = carregarFaturasSalvas;
-window.salvarFatura = salvarFatura;
-window.getFaturasSalvas = () => faturasSalvas;
-
-
-/* =========================================================
    ATUALIZAÇÃO GERAL
 ========================================================= */
 
@@ -1527,38 +1613,14 @@ window.atualizarTudo = atualizarTudo;
 ========================================================= */
 
 window.addEventListener("parcelas-atualizadas", () => {
-  // Atualiza os cards de fatura (totais)
   if (typeof renderFaturaCards === "function") {
     renderFaturaCards();
   }
 
-  // Se tem um banco selecionado, atualiza a lista de compras dele também
-  if (bancoSelecionadoFatura) {
-    const nome = bancoSelecionadoFatura;
-    const mesAtual = new Date().toISOString().substring(0, 7);
-
-    comprasOriginais = transacoes
-      .filter((t) => t.modalidade === "Crédito" && t.tipo === "saida" && t.banco === nome)
-      .sort((a, b) => new Date(b.data) - new Date(a.data));
-
-    if (typeof window.parcelasDoMes === "function") {
-      const parcelas = window.parcelasDoMes(mesAtual).filter((p) => p.banco === nome);
-      parcelas.forEach((p) => {
-        comprasOriginais.push({
-          descricao: `${p.descricao} (${p.numero}/${p.total})`,
-          valor: p.valor,
-          banco: p.banco,
-          data: p.data,
-          modalidade: "Crédito",
-          _parcela: true,
-        });
-      });
-      comprasOriginais.sort((a, b) => new Date(b.data) - new Date(a.data));
-    }
-
-    if (typeof renderTabelaFatura === "function") {
-      renderTabelaFatura(comprasOriginais);
-    }
+  // Se modal de faturas estiver aberto, re-renderiza
+  const modalFaturasAberto = $("modalFaturas")?.classList.contains("active");
+  if (modalFaturasAberto && bancoSelecionadoFatura) {
+    renderListaFaturas(bancoSelecionadoFatura);
   }
 });
 
