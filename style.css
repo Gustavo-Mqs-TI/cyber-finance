@@ -1182,18 +1182,10 @@ input[type="number"]::-webkit-inner-spin-button {
   position: relative;
 }
 
-/* 🔔 NOVO: saldo negativo em vermelho */
+/* Saldo negativo — mesma cor dos demais (só o sinal de menos indica) */
 .banco-card .card-line.saldo-negativo strong {
-  color: #fca5a5;
-  font-weight: 700;
-}
-
-.banco-card .card-line.saldo-negativo span {
-  opacity: 0.9;
-}
-
-.banco-card:has(.saldo-negativo) {
-  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5) inset;
+  color: #fff;
+  font-weight: 600;
 }
 
 .empty-cards {
