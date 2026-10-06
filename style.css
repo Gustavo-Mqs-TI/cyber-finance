@@ -2211,6 +2211,23 @@ select:-webkit-autofill:focus {
   font-style: italic;
 }
 
+.fatura-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.fatura-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  ...
+}
+
 @media (max-width: 640px) {
   .lista-faturas {
     max-height: 70vh;
