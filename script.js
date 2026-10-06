@@ -628,6 +628,12 @@ $("formGasto").addEventListener("submit", async (e) => {
     return;
   }
 
+  // 🔔 Toda SAÍDA exige banco (débito, crédito, pix, boleto, dinheiro)
+  if (tipoVal === "saida" && !bancoVal) {
+    toast("Toda saída precisa de um banco cadastrado.", "error");
+    return;
+  }
+
   transacoes.push({
     id: gerarId(),
     descricao: desc,
@@ -684,13 +690,22 @@ $("formEditar").addEventListener("submit", async (e) => {
   const idx = transacoes.findIndex((t) => t.id === id);
   if (idx === -1) return;
 
+  const tipoVal = $("editarTipo").value;
+  const bancoVal = $("editarBanco").value;
+
+  // 🔔 Mesma validação: toda saída exige banco
+  if (tipoVal === "saida" && !bancoVal) {
+    toast("Toda saída precisa de um banco cadastrado.", "error");
+    return;
+  }
+
   transacoes[idx] = {
     id,
     descricao: $("editarDescricao").value.trim(),
     valor: parseFloat($("editarValor").value),
-    tipo: $("editarTipo").value,
+    tipo: tipoVal,
     modalidade: $("editarModalidade").value,
-    banco: $("editarBanco").value || "",
+    banco: bancoVal || "",
     data: $("editarData").value,
   };
 
@@ -764,6 +779,49 @@ function atualizarTabela() {
 }
 
 /* =========================================================
+   CÁLCULO UNIFICADO DE SALDO
+   Fonte única da verdade: soma dos cards === saldo geral
+========================================================= */
+
+function calcularSaldosPorBanco() {
+  const porBanco = {};
+  configUsuario.bancos.forEach((b) => (porBanco[b] = 0));
+  let geral = 0;
+
+  // 1. Transações (entrada/saída fora do crédito), exceto benefícios
+  transacoes.forEach((t) => {
+    if (configUsuario.beneficios.includes(t.modalidade)) return;
+    if (t.tipo === "saida" && t.modalidade === "Crédito") return;
+
+    const valor = t.tipo === "entrada" ? t.valor : -t.valor;
+
+    geral += valor;
+
+    if (t.banco && configUsuario.bancos.includes(t.banco)) {
+      porBanco[t.banco] += valor;
+    }
+  });
+
+  // 2. Faturas pagas — subtrai do banco e do geral
+  Object.keys(faturasSalvas).forEach((chave) => {
+    const idx = chave.lastIndexOf("_");
+    const b = chave.substring(0, idx);
+    const salva = faturasSalvas[chave];
+    if (!salva || salva.status !== "paga" || salva.valorFechado == null) return;
+
+    const valor = Number(salva.valorFechado) || 0;
+    geral -= valor;
+    if (configUsuario.bancos.includes(b)) {
+      porBanco[b] -= valor;
+    }
+  });
+
+  return { geral, porBanco };
+}
+
+window.calcularSaldosPorBanco = calcularSaldosPorBanco;
+
+/* =========================================================
    RESUMO
 ========================================================= */
 
@@ -779,7 +837,10 @@ function atualizarResumo() {
 
   $("totalEntrada").textContent = formatarMoeda(entrada);
   $("totalSaida").textContent = formatarMoeda(saida);
-  $("saldoFinal").textContent = formatarMoeda(entrada - saida);
+
+  // 🔔 Saldo unificado (bate com a soma dos cards de banco)
+  const { geral } = calcularSaldosPorBanco();
+  $("saldoFinal").textContent = formatarMoeda(geral);
 }
 
 /* =========================================================
@@ -902,24 +963,6 @@ function limparFiltrosBeneficioUI() {
    FATURA
 ========================================================= */
 
-/* Retorna o valor já pago de faturas de um banco (todas as faturas com status "paga") */
-function totalFaturasPagasDoBanco(banco) {
-  let total = 0;
-  Object.keys(faturasSalvas).forEach((chave) => {
-    const idx = chave.lastIndexOf("_");
-    const b = chave.substring(0, idx);
-    if (b !== banco) return;
-
-    const salva = faturasSalvas[chave];
-    if (salva && salva.status === "paga" && salva.valorFechado != null) {
-      total += Number(salva.valorFechado) || 0;
-    }
-  });
-  return total;
-}
-
-window.totalFaturasPagasDoBanco = totalFaturasPagasDoBanco;
-
 function renderFaturaCards() {
   const container = $("faturaContainer");
   if (!container) return;
@@ -929,25 +972,14 @@ function renderFaturaCards() {
     return;
   }
 
+  // Totais de fatura (compras em crédito + parcelas do mês)
   const totaisFatura = {};
-  const saldosBancos = {};
-
-  configUsuario.bancos.forEach((b) => {
-    totaisFatura[b] = 0;
-    saldosBancos[b] = 0;
-  });
+  configUsuario.bancos.forEach((b) => (totaisFatura[b] = 0));
 
   transacoes.forEach((t) => {
     if (!t.banco || !configUsuario.bancos.includes(t.banco)) return;
-
     if (t.modalidade === "Crédito" && t.tipo === "saida") {
       totaisFatura[t.banco] += t.valor;
-    }
-
-    if (t.tipo === "entrada") {
-      saldosBancos[t.banco] += t.valor;
-    } else if (t.tipo === "saida" && t.modalidade !== "Crédito") {
-      saldosBancos[t.banco] -= t.valor;
     }
   });
 
@@ -961,15 +993,12 @@ function renderFaturaCards() {
     });
   }
 
-  /* 🔔 NOVO: subtrai do saldo todas as faturas já pagas */
-  configUsuario.bancos.forEach((b) => {
-    const pago = totalFaturasPagasDoBanco(b);
-    saldosBancos[b] -= pago;
-  });
+  // 🔔 Saldos unificados (mesma conta do card "Saldo" da aba Geral)
+  const { porBanco } = calcularSaldosPorBanco();
 
   container.innerHTML = configUsuario.bancos.map((b) => {
     const cor = coresPersonalizadas.bancos[b] || "#6366f1";
-    const saldo = saldosBancos[b];
+    const saldo = porBanco[b] || 0;
     const saldoClasse = saldo < 0 ? "saldo-negativo" : "";
     return `
       <div class="banco-card" style="background: linear-gradient(135deg, ${cor}, ${cor})" onclick="filtrarBancoCredito('${escapeAttr(b)}')">
@@ -1436,6 +1465,7 @@ async function pagarFatura(banco, mes, event) {
     toast(jaPaga ? "Pagamento desfeito" : "Fatura marcada como paga!", "success");
     renderListaFaturas(banco);
     renderFaturaCards();
+    atualizarResumo();
   } else {
     toast("Não foi possível salvar. Verifique a conexão.", "error");
   }
