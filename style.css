@@ -2012,11 +2012,6 @@ select:-webkit-autofill:focus {
 
 /* =========================================================
    MODAL DE FATURAS
-   🔧 CORRIGIDO: flex-shrink: 0 nos cards para não serem
-      esmagados pelo flex container .lista-faturas
-========================================================= */
-/* =========================================================
-   MODAL DE FATURAS
    🔧 flex-shrink: 0 nos cards para não serem esmagados
 ========================================================= */
 
@@ -2168,7 +2163,92 @@ select:-webkit-autofill:focus {
   animation: fadeUp 0.2s ease;
 }
 
-.fatura-itens
+.fatura-itens {
+  margin-top: 12px;
+}
+
+.fatura-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.fatura-item:last-child {
+  border-bottom: none;
+}
+
+.fatura-item-desc {
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fatura-item-desc small {
+  display: block;
+  color: var(--text-dim);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.fatura-item-valor {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.fatura-item-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0 4px;
+  margin-top: 6px;
+  border-top: 2px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.fatura-item-total span:first-child {
+  color: var(--text-muted);
+}
+
+.fatura-item-total span:last-child {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text);
+}
+
+/* 🔧 ações da fatura (botão pagar/desmarcar) */
+.fatura-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.fatura-actions .btn {
+  padding: 10px 16px;
+  font-size: 13.5px;
+}
+
+.fatura-card.expandido:has(.fatura-card-badge.paga) .fatura-item-total {
+  opacity: 0.75;
+}
+
+.fatura-vazia {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-style: italic;
+}
 
 @media (max-width: 640px) {
   .lista-faturas {
