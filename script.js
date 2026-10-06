@@ -29,6 +29,7 @@ let configUsuario = {
   bancos: [],
   modalidades: [],
   bancoProximoMesFatura: {},
+  faturasFechadas: {},
 };
 let coresPersonalizadas = {
   entrada: "#10b981",
@@ -345,6 +346,7 @@ async function carregarConfiguracoes() {
       bancos: cfg.bancos || [],
       modalidades: cfg.modalidades || [],
       bancoProximoMesFatura: cfg.bancoProximoMesFatura || {},
+      faturasFechadas: cfg.faturasFechadas || {},
     };
     return true;
   }
@@ -575,7 +577,13 @@ async function logout() {
   sessionStorage.removeItem("financa_usuario");
   usuarioLogado = null;
   transacoes = [];
-  configUsuario = { beneficios: [], bancos: [], modalidades: [], bancoProximoMesFatura: {} };
+  configUsuario = {
+    beneficios: [],
+    bancos: [],
+    modalidades: [],
+    bancoProximoMesFatura: {},
+    faturasFechadas: {},
+  };
   coresPersonalizadas = {
     entrada: "#10b981",
     saida: "#ef4444",
@@ -1244,17 +1252,19 @@ function temComprasAposFechamento(banco, mes) {
   return totalAtual > totalCongelado + 0.01;
 }
 
-/* 🔔 Retorna o mês onde estão caindo as novas compras do banco (ou null) */
-function bancoEstaFechado(banco) {
-  const proximoMes = configUsuario.bancoProximoMesFatura?.[banco];
-  if (!proximoMes) return null;
-  return proximoMes;
+/* 🔔 Retorna o mês que foi fechado do banco (ex: "2026-01") */
+function mesFechadoDoBanco(banco) {
+  return configUsuario.faturasFechadas?.[banco] || null;
 }
 
-/* 🔔 Retorna TRUE se o mês X é o "mês ativo" de fechamento do banco */
+/* 🔔 Retorna o mês destino das próximas compras (ex: "2026-02") */
+function bancoEstaFechado(banco) {
+  return configUsuario.bancoProximoMesFatura?.[banco] || null;
+}
+
+/* 🔔 Retorna TRUE se ESSE mês específico é o que foi fechado */
 function mesEstaFechado(banco, mes) {
-  const proximoMes = bancoEstaFechado(banco);
-  return proximoMes === mes;
+  return mesFechadoDoBanco(banco) === mes;
 }
 
 function mesesFatura(banco) {
@@ -1290,9 +1300,9 @@ function mesesFatura(banco) {
     if (b === banco) meses.add(mes);
   });
 
-  // 🔔 Adiciona o mês "próximo" se o banco estiver fechado
-  const proximoMes = bancoEstaFechado(banco);
-  if (proximoMes) meses.add(proximoMes);
+  // 🔔 Adiciona o mês que foi fechado (pra ele aparecer na lista)
+  const mesFechado = mesFechadoDoBanco(banco);
+  if (mesFechado) meses.add(mesFechado);
 
   return [...meses].sort();
 }
@@ -1362,6 +1372,7 @@ window.salvarFatura = salvarFatura;
 window.getFaturasSalvas = () => faturasSalvas;
 window.bancoEstaFechado = bancoEstaFechado;
 window.mesEstaFechado = mesEstaFechado;
+window.mesFechadoDoBanco = mesFechadoDoBanco;
 window.mesFaturaDaTransacao = mesFaturaDaTransacao;
 
 /* =========================================================
@@ -1421,10 +1432,11 @@ function renderListaFaturas(banco) {
 
       const temComprasPos = temComprasAposFechamento(banco, mes);
 
-      // 🔔 Próximo mês configurado (ou null)
-      const proximoMes = bancoEstaFechado(banco);
-
-      // 🔔 Só é "mês ativo" se ESSE mês for o próximo mês configurado
+      // 🔔 Destino das próximas compras (ou null)
+      const proximoMesDestino = bancoEstaFechado(banco);
+      // 🔔 Mês que foi fechado (ou null)
+      const mesFechado = mesFechadoDoBanco(banco);
+      // 🔔 Só é "mês ativo de fechamento" se ESSE mês for o que foi fechado
       const estaFechado = mesEstaFechado(banco, mes);
 
       let detalheExtra = "";
@@ -1445,12 +1457,12 @@ function renderListaFaturas(banco) {
         `;
       }
 
-      // 🔔 Aviso de banco fechado (só no mês ativo)
+      // 🔔 Aviso de fatura fechada (só no mês que foi fechado)
       let avisoFechado = "";
-      if (estaFechado) {
+      if (estaFechado && proximoMesDestino) {
         avisoFechado = `
           <div style="margin-top:8px;padding:8px 12px;background:var(--primary-soft);border-radius:var(--r-sm);font-size:12px;color:var(--primary);">
-            🔒 Fatura fechada — novas compras vão pra <strong>${nomeMesAno(proximoMes)}</strong>.
+            🔒 Fatura fechada — novas compras vão pra <strong>${nomeMesAno(proximoMesDestino)}</strong>.
           </div>
         `;
       }
@@ -1584,10 +1596,11 @@ async function fecharFatura(banco, mesAtual, event) {
     return;
   }
 
-  if (!configUsuario.bancoProximoMesFatura) {
-    configUsuario.bancoProximoMesFatura = {};
-  }
-  configUsuario.bancoProximoMesFatura[banco] = mesProx;
+  if (!configUsuario.bancoProximoMesFatura) configUsuario.bancoProximoMesFatura = {};
+  if (!configUsuario.faturasFechadas) configUsuario.faturasFechadas = {};
+
+  configUsuario.bancoProximoMesFatura[banco] = mesProx;   // destino das próximas compras
+  configUsuario.faturasFechadas[banco] = mesAtual;        // mês que foi fechado
 
   await salvarConfiguracoes();
 
@@ -1601,13 +1614,14 @@ async function fecharFatura(banco, mesAtual, event) {
 async function reabrirFatura(banco, event) {
   if (event) event.stopPropagation();
 
-  if (!confirm(`Reabrir a fatura do ${banco}?\n\nAs próximas compras no crédito vão pro mês da data real.`)) {
+  const mesFechado = mesFechadoDoBanco(banco);
+
+  if (!confirm(`Reabrir a fatura de ${mesFechado ? nomeMesAno(mesFechado) : "do " + banco}?\n\nAs próximas compras no crédito vão pro mês da data real.`)) {
     return;
   }
 
-  if (configUsuario.bancoProximoMesFatura) {
-    delete configUsuario.bancoProximoMesFatura[banco];
-  }
+  if (configUsuario.bancoProximoMesFatura) delete configUsuario.bancoProximoMesFatura[banco];
+  if (configUsuario.faturasFechadas) delete configUsuario.faturasFechadas[banco];
 
   await salvarConfiguracoes();
 
