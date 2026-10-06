@@ -124,14 +124,12 @@ a { color: inherit; text-decoration: none; }
 svg { display: block; }
 
 /* =========================================================
-   HELPERS + CONTROLE DE TELAS  ← ALTERADO AQUI
+   HELPERS + CONTROLE DE TELAS
 ========================================================= */
 
 .screen { display: none; }
 .screen.active { display: block; }
 
-/* Trava a rolagem quando o usuário está em telas de autenticação
-   (login, registro, recuperar, configuração) */
 body.auth-mode {
   overflow: hidden;
   height: 100vh;
@@ -142,7 +140,6 @@ body.auth-mode .screen.active {
   overflow-y: auto;
 }
 
-/* A tela do app ocupa o viewport todo */
 #telaApp.screen.active {
   display: block;
   min-height: 100vh;
@@ -607,7 +604,7 @@ input[type="number"]::-webkit-inner-spin-button {
 .config-actions { margin-top: 8px; }
 
 /* =========================================================
-   APP LAYOUT  ← ALTERADO AQUI
+   APP LAYOUT
 ========================================================= */
 
 .app {
@@ -1472,7 +1469,6 @@ select:-webkit-autofill {
   border-color: var(--border) !important;
 }
 
-/* No focus, mantém o estilo normal */
 input:-webkit-autofill:focus,
 select:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 1000px var(--surface) inset,
@@ -1481,6 +1477,7 @@ select:-webkit-autofill:focus {
               0 0 0 3px var(--primary-soft) !important;
   border-color: var(--primary) !important;
 }
+
 /* =========================================================
    MÓDULO CRIPTOS
 ========================================================= */
@@ -2015,6 +2012,8 @@ select:-webkit-autofill:focus {
 
 /* =========================================================
    MODAL DE FATURAS
+   🔧 CORRIGIDO: flex-shrink: 0 nos cards para não serem
+      esmagados pelo flex container .lista-faturas
 ========================================================= */
 
 .lista-faturas {
@@ -2024,6 +2023,7 @@ select:-webkit-autofill:focus {
   max-height: 60vh;
   overflow-y: auto;
   padding-right: 4px;
+  align-items: stretch;           /* 🔧 garante largura total nos filhos */
 }
 
 .fatura-card {
@@ -2032,6 +2032,9 @@ select:-webkit-autofill:focus {
   border-radius: var(--r-lg);
   overflow: hidden;
   transition: border-color var(--t), box-shadow var(--t);
+
+  flex: 0 0 auto;                 /* 🔧 NÃO ENCOLHE — a correção do bug */
+  min-height: fit-content;        /* 🔧 trava altura mínima pelo conteúdo */
 }
 
 .fatura-card:hover {
@@ -2052,6 +2055,9 @@ select:-webkit-autofill:focus {
   cursor: pointer;
   user-select: none;
   transition: background var(--t);
+
+  flex-shrink: 0;                 /* 🔧 impede colapso do cabeçalho */
+  min-height: 60px;               /* 🔧 garante altura mínima visível */
 }
 
 .fatura-card-head:hover {
@@ -2073,6 +2079,7 @@ select:-webkit-autofill:focus {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;                /* 🔧 evita quebra feia em telas estreitas */
 }
 
 .fatura-card-valor {
@@ -2209,23 +2216,6 @@ select:-webkit-autofill:focus {
   color: var(--text-dim);
   font-size: 13px;
   font-style: italic;
-}
-
-.fatura-card {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  overflow: hidden;
-}
-
-.fatura-card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  cursor: pointer;
-  ...
 }
 
 @media (max-width: 640px) {
