@@ -661,7 +661,6 @@ $("formGasto").addEventListener("submit", async (e) => {
     return;
   }
 
-  // 🔔 Toda SAÍDA exige banco
   if (tipoVal === "saida" && !bancoVal) {
     toast("Toda saída precisa de um banco cadastrado.", "error");
     return;
@@ -752,21 +751,18 @@ $("formEditar").addEventListener("submit", async (e) => {
     data: dataVal,
   };
 
-  // 🔔 Se virou crédito ou mudou de banco, recalcula o mês da fatura
   const anterior = transacoes[idx];
   const eraCredito = anterior.modalidade === "Crédito" && anterior.tipo === "saida";
   const ehCredito = tipoVal === "saida" && modVal === "Crédito";
 
   if (ehCredito && bancoVal) {
     if (!eraCredito || anterior.banco !== bancoVal) {
-      // Recalcula com base no próximo mês configurado
       const proximoMes = configUsuario.bancoProximoMesFatura?.[bancoVal];
       atualizada._mesFatura = proximoMes || dataVal.substring(0, 7);
     } else {
       atualizada._mesFatura = anterior._mesFatura || dataVal.substring(0, 7);
     }
   } else {
-    // Não é mais crédito — remove o marcador
     atualizada._mesFatura = undefined;
   }
 
@@ -1170,13 +1166,11 @@ function chaveFatura(banco, mes) {
   return `${banco}_${mes}`;
 }
 
-/* 🔔 Retorna o mês da fatura de uma transação de crédito */
 function mesFaturaDaTransacao(t) {
   if (t._mesFatura) return t._mesFatura;
   return t.data ? t.data.substring(0, 7) : null;
 }
 
-/* 🔔 Filtra compras no crédito pela fatura (usa _mesFatura se existir) */
 function comprasCreditoDoMes(banco, mes) {
   return transacoes.filter((t) => {
     return (
@@ -1250,11 +1244,17 @@ function temComprasAposFechamento(banco, mes) {
   return totalAtual > totalCongelado + 0.01;
 }
 
-/* 🔔 Verifica se o banco está com "fechar fatura" ativo e pra qual mês */
+/* 🔔 Retorna o mês onde estão caindo as novas compras do banco (ou null) */
 function bancoEstaFechado(banco) {
   const proximoMes = configUsuario.bancoProximoMesFatura?.[banco];
   if (!proximoMes) return null;
   return proximoMes;
+}
+
+/* 🔔 Retorna TRUE se o mês X é o "mês ativo" de fechamento do banco */
+function mesEstaFechado(banco, mes) {
+  const proximoMes = bancoEstaFechado(banco);
+  return proximoMes === mes;
 }
 
 function mesesFatura(banco) {
@@ -1290,7 +1290,7 @@ function mesesFatura(banco) {
     if (b === banco) meses.add(mes);
   });
 
-  // 🔔 Adiciona o mês "próximo" se o banco estiver fechado (pra aparecer fatura futura)
+  // 🔔 Adiciona o mês "próximo" se o banco estiver fechado
   const proximoMes = bancoEstaFechado(banco);
   if (proximoMes) meses.add(proximoMes);
 
@@ -1361,6 +1361,7 @@ window.carregarFaturasSalvas = carregarFaturasSalvas;
 window.salvarFatura = salvarFatura;
 window.getFaturasSalvas = () => faturasSalvas;
 window.bancoEstaFechado = bancoEstaFechado;
+window.mesEstaFechado = mesEstaFechado;
 window.mesFaturaDaTransacao = mesFaturaDaTransacao;
 
 /* =========================================================
@@ -1420,9 +1421,11 @@ function renderListaFaturas(banco) {
 
       const temComprasPos = temComprasAposFechamento(banco, mes);
 
-      // 🔔 Verifica se este banco está com "fechar fatura" ativo
+      // 🔔 Próximo mês configurado (ou null)
       const proximoMes = bancoEstaFechado(banco);
-      const estaFechado = !!proximoMes;
+
+      // 🔔 Só é "mês ativo" se ESSE mês for o próximo mês configurado
+      const estaFechado = mesEstaFechado(banco, mes);
 
       let detalheExtra = "";
       if (st === "paga" && salva?.dataPagamento) {
@@ -1442,7 +1445,7 @@ function renderListaFaturas(banco) {
         `;
       }
 
-      // 🔔 Aviso de banco fechado
+      // 🔔 Aviso de banco fechado (só no mês ativo)
       let avisoFechado = "";
       if (estaFechado) {
         avisoFechado = `
@@ -1464,12 +1467,10 @@ function renderListaFaturas(banco) {
           `).join("")
         : `<div class="fatura-vazia">Sem itens nesta fatura.</div>`;
 
-      // Botão pagar/desmarcar
       const botaoPagar = st === "paga"
         ? `<button type="button" class="btn btn-ghost" onclick="pagarFatura('${escapeAttr(banco)}', '${mes}', event)">↺ Desmarcar pagamento</button>`
         : `<button type="button" class="btn btn-primary" onclick="pagarFatura('${escapeAttr(banco)}', '${mes}', event)">✓ Pagar fatura</button>`;
 
-      // 🔔 Botão fechar/reabrir
       const botaoFechar = estaFechado
         ? `<button type="button" class="btn btn-ghost" onclick="reabrirFatura('${escapeAttr(banco)}', event)">↺ Reabrir fatura</button>`
         : `<button type="button" class="btn btn-ghost" onclick="fecharFatura('${escapeAttr(banco)}', '${mes}', event)">🔒 Fechar fatura</button>`;
@@ -1583,7 +1584,6 @@ async function fecharFatura(banco, mesAtual, event) {
     return;
   }
 
-  // Salva no config do usuário
   if (!configUsuario.bancoProximoMesFatura) {
     configUsuario.bancoProximoMesFatura = {};
   }
