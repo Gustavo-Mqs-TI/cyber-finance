@@ -2240,8 +2240,14 @@ select:-webkit-autofill:focus {
 .fatura-actions .btn {
   padding: 10px 16px;
   font-size: 13.5px;
+  flex: 1;
 }
 
+@media (max-width: 480px) {
+  .fatura-actions {
+    flex-direction: column;
+  }
+}
 .fatura-card.expandido:has(.fatura-card-badge.paga) .fatura-item-total {
   opacity: 0.75;
 }
