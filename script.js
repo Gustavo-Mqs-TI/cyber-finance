@@ -55,6 +55,12 @@ function formatarMoeda(v) {
   });
 }
 
+/* Normaliza valores "quase zero" pra evitar -0,00 */
+function normalizarZero(v) {
+  const n = Number(v) || 0;
+  return Math.abs(n) < 0.005 ? 0 : n;
+}
+
 function $(id) {
   return document.getElementById(id);
 }
@@ -117,6 +123,7 @@ window.dataHoje = dataHoje;
 window.toast = toast;
 window.escapeHtml = escapeHtml;
 window.escapeAttr = escapeAttr;
+window.normalizarZero = normalizarZero;
 
 Object.defineProperty(window, "usuarioLogado", {
   get: () => usuarioLogado,
@@ -814,6 +821,12 @@ function calcularSaldosPorBanco() {
     if (configUsuario.bancos.includes(b)) {
       porBanco[b] -= valor;
     }
+  });
+
+  // 🔔 Normaliza zeros pra evitar "-R$ 0,00"
+  geral = normalizarZero(geral);
+  Object.keys(porBanco).forEach((b) => {
+    porBanco[b] = normalizarZero(porBanco[b]);
   });
 
   return { geral, porBanco };
