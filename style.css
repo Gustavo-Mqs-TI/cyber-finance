@@ -1182,6 +1182,20 @@ input[type="number"]::-webkit-inner-spin-button {
   position: relative;
 }
 
+/* 🔔 NOVO: saldo negativo em vermelho */
+.banco-card .card-line.saldo-negativo strong {
+  color: #fca5a5;
+  font-weight: 700;
+}
+
+.banco-card .card-line.saldo-negativo span {
+  opacity: 0.9;
+}
+
+.banco-card:has(.saldo-negativo) {
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5) inset;
+}
+
 .empty-cards {
   grid-column: 1 / -1;
   text-align: center;
@@ -2047,7 +2061,6 @@ select:-webkit-autofill:focus {
   box-shadow: 0 0 0 2px var(--primary-soft);
 }
 
-/* 🔧 borda lateral colorida pelo status */
 .fatura-card:has(.fatura-card-badge.paga) {
   border-left: 3px solid var(--success);
 }
@@ -2224,7 +2237,6 @@ select:-webkit-autofill:focus {
   color: var(--text);
 }
 
-/* 🔧 ações da fatura (botão pagar/desmarcar) */
 .fatura-actions {
   display: flex;
   gap: 10px;
