@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=3">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -1499,16 +1499,20 @@
 
 <!-- =========================================================
      SCRIPTS — ordem importa!
-     1) firebase-config.js  (módulo, carrega o SDK)
-     2) script.js           (módulo, espera firebase-ready)
-     3) demais módulos
+     1) firebase.js    (módulo, carrega o SDK)
+     2) parcelas.js    (define window.parcelasIniciar etc)
+     3) criptos.js
+     4) recorrentes.js
+     5) metas.js
+     6) graficos.js
+     7) script.js      (por último — orquestra tudo)
 ========================================================= -->
 <script type="module" src="firebase.js"></script>
-<script type="module" src="script.js"></script>
-<script type="module" src="criptos.js"></script>
 <script type="module" src="parcelas.js"></script>
+<script type="module" src="criptos.js"></script>
 <script type="module" src="recorrentes.js"></script>
 <script type="module" src="metas.js"></script>
 <script type="module" src="graficos.js"></script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
