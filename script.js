@@ -28,6 +28,7 @@ let configUsuario = {
   beneficios: [],
   bancos: [],
   modalidades: [],
+  bancoProximoMesFatura: {},
 };
 let coresPersonalizadas = {
   entrada: "#10b981",
@@ -55,7 +56,6 @@ function formatarMoeda(v) {
   });
 }
 
-/* Normaliza valores "quase zero" pra evitar -0,00 */
 function normalizarZero(v) {
   const n = Number(v) || 0;
   return Math.abs(n) < 0.005 ? 0 : n;
@@ -95,6 +95,24 @@ function formatarData(iso) {
 }
 
 /* =========================================================
+   HELPERS DE MÊS
+========================================================= */
+
+function mesSeguinte(ref) {
+  const [ano, mes] = ref.split("-").map(Number);
+  const novoMes = mes === 12 ? 1 : mes + 1;
+  const novoAno = mes === 12 ? ano + 1 : ano;
+  return `${novoAno}-${String(novoMes).padStart(2, "0")}`;
+}
+
+function mesAnterior(ref) {
+  const [ano, mes] = ref.split("-").map(Number);
+  const novoMes = mes === 1 ? 12 : mes - 1;
+  const novoAno = mes === 1 ? ano - 1 : ano;
+  return `${novoAno}-${String(novoMes).padStart(2, "0")}`;
+}
+
+/* =========================================================
    TOASTS
 ========================================================= */
 
@@ -124,6 +142,8 @@ window.toast = toast;
 window.escapeHtml = escapeHtml;
 window.escapeAttr = escapeAttr;
 window.normalizarZero = normalizarZero;
+window.mesSeguinte = mesSeguinte;
+window.mesAnterior = mesAnterior;
 
 Object.defineProperty(window, "usuarioLogado", {
   get: () => usuarioLogado,
@@ -324,6 +344,7 @@ async function carregarConfiguracoes() {
       beneficios: cfg.beneficios || [],
       bancos: cfg.bancos || [],
       modalidades: cfg.modalidades || [],
+      bancoProximoMesFatura: cfg.bancoProximoMesFatura || {},
     };
     return true;
   }
@@ -414,7 +435,12 @@ $("formConfiguracao").addEventListener("submit", async (e) => {
     return;
   }
 
-  configUsuario = { beneficios, bancos, modalidades };
+  configUsuario = {
+    ...configUsuario,
+    beneficios,
+    bancos,
+    modalidades,
+  };
 
   await salvarConfiguracoes();
 
@@ -549,7 +575,7 @@ async function logout() {
   sessionStorage.removeItem("financa_usuario");
   usuarioLogado = null;
   transacoes = [];
-  configUsuario = { beneficios: [], bancos: [], modalidades: [] };
+  configUsuario = { beneficios: [], bancos: [], modalidades: [], bancoProximoMesFatura: {} };
   coresPersonalizadas = {
     entrada: "#10b981",
     saida: "#ef4444",
@@ -635,13 +661,13 @@ $("formGasto").addEventListener("submit", async (e) => {
     return;
   }
 
-  // 🔔 Toda SAÍDA exige banco (débito, crédito, pix, boleto, dinheiro)
+  // 🔔 Toda SAÍDA exige banco
   if (tipoVal === "saida" && !bancoVal) {
     toast("Toda saída precisa de um banco cadastrado.", "error");
     return;
   }
 
-  transacoes.push({
+  const nova = {
     id: gerarId(),
     descricao: desc,
     valor: val,
@@ -649,7 +675,15 @@ $("formGasto").addEventListener("submit", async (e) => {
     modalidade: modVal,
     banco: bancoVal || "",
     data: dataVal,
-  });
+  };
+
+  // 🔔 Se for CRÉDITO, decide em qual fatura a compra entra
+  if (tipoVal === "saida" && modVal === "Crédito" && bancoVal) {
+    const proximoMes = configUsuario.bancoProximoMesFatura?.[bancoVal];
+    nova._mesFatura = proximoMes || dataVal.substring(0, 7);
+  }
+
+  transacoes.push(nova);
 
   await salvarTransacoes();
 
@@ -700,21 +734,43 @@ $("formEditar").addEventListener("submit", async (e) => {
   const tipoVal = $("editarTipo").value;
   const bancoVal = $("editarBanco").value;
 
-  // 🔔 Mesma validação: toda saída exige banco
   if (tipoVal === "saida" && !bancoVal) {
     toast("Toda saída precisa de um banco cadastrado.", "error");
     return;
   }
 
-  transacoes[idx] = {
+  const dataVal = $("editarData").value;
+  const modVal = $("editarModalidade").value;
+
+  const atualizada = {
     id,
     descricao: $("editarDescricao").value.trim(),
     valor: parseFloat($("editarValor").value),
     tipo: tipoVal,
-    modalidade: $("editarModalidade").value,
+    modalidade: modVal,
     banco: bancoVal || "",
-    data: $("editarData").value,
+    data: dataVal,
   };
+
+  // 🔔 Se virou crédito ou mudou de banco, recalcula o mês da fatura
+  const anterior = transacoes[idx];
+  const eraCredito = anterior.modalidade === "Crédito" && anterior.tipo === "saida";
+  const ehCredito = tipoVal === "saida" && modVal === "Crédito";
+
+  if (ehCredito && bancoVal) {
+    if (!eraCredito || anterior.banco !== bancoVal) {
+      // Recalcula com base no próximo mês configurado
+      const proximoMes = configUsuario.bancoProximoMesFatura?.[bancoVal];
+      atualizada._mesFatura = proximoMes || dataVal.substring(0, 7);
+    } else {
+      atualizada._mesFatura = anterior._mesFatura || dataVal.substring(0, 7);
+    }
+  } else {
+    // Não é mais crédito — remove o marcador
+    atualizada._mesFatura = undefined;
+  }
+
+  transacoes[idx] = atualizada;
 
   await salvarTransacoes();
 
@@ -787,7 +843,6 @@ function atualizarTabela() {
 
 /* =========================================================
    CÁLCULO UNIFICADO DE SALDO
-   Fonte única da verdade: soma dos cards === saldo geral
 ========================================================= */
 
 function calcularSaldosPorBanco() {
@@ -795,7 +850,6 @@ function calcularSaldosPorBanco() {
   configUsuario.bancos.forEach((b) => (porBanco[b] = 0));
   let geral = 0;
 
-  // 1. Transações (entrada/saída fora do crédito), exceto benefícios
   transacoes.forEach((t) => {
     if (configUsuario.beneficios.includes(t.modalidade)) return;
     if (t.tipo === "saida" && t.modalidade === "Crédito") return;
@@ -809,7 +863,6 @@ function calcularSaldosPorBanco() {
     }
   });
 
-  // 2. Faturas pagas — subtrai do banco e do geral
   Object.keys(faturasSalvas).forEach((chave) => {
     const idx = chave.lastIndexOf("_");
     const b = chave.substring(0, idx);
@@ -823,7 +876,6 @@ function calcularSaldosPorBanco() {
     }
   });
 
-  // 🔔 Normaliza zeros pra evitar "-R$ 0,00"
   geral = normalizarZero(geral);
   Object.keys(porBanco).forEach((b) => {
     porBanco[b] = normalizarZero(porBanco[b]);
@@ -851,7 +903,6 @@ function atualizarResumo() {
   $("totalEntrada").textContent = formatarMoeda(entrada);
   $("totalSaida").textContent = formatarMoeda(saida);
 
-  // 🔔 Saldo unificado (bate com a soma dos cards de banco)
   const { geral } = calcularSaldosPorBanco();
   $("saldoFinal").textContent = formatarMoeda(geral);
 }
@@ -985,7 +1036,6 @@ function renderFaturaCards() {
     return;
   }
 
-  // Totais de fatura (compras em crédito + parcelas do mês)
   const totaisFatura = {};
   configUsuario.bancos.forEach((b) => (totaisFatura[b] = 0));
 
@@ -1006,7 +1056,6 @@ function renderFaturaCards() {
     });
   }
 
-  // 🔔 Saldos unificados (mesma conta do card "Saldo" da aba Geral)
   const { porBanco } = calcularSaldosPorBanco();
 
   container.innerHTML = configUsuario.bancos.map((b) => {
@@ -1092,9 +1141,8 @@ function limparFiltrosFaturaUI() {
    FATURAS — Motor de cálculo
 ========================================================= */
 
-let faturasSalvas = {}; // { "Nubank_2026-10": { status, valorFechado, ... }, ... }
+let faturasSalvas = {};
 
-/* Helpers de data */
 function mesAtualRef() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -1122,14 +1170,20 @@ function chaveFatura(banco, mes) {
   return `${banco}_${mes}`;
 }
 
+/* 🔔 Retorna o mês da fatura de uma transação de crédito */
+function mesFaturaDaTransacao(t) {
+  if (t._mesFatura) return t._mesFatura;
+  return t.data ? t.data.substring(0, 7) : null;
+}
+
+/* 🔔 Filtra compras no crédito pela fatura (usa _mesFatura se existir) */
 function comprasCreditoDoMes(banco, mes) {
   return transacoes.filter((t) => {
     return (
       t.banco === banco &&
       t.modalidade === "Crédito" &&
       t.tipo === "saida" &&
-      t.data &&
-      t.data.startsWith(mes)
+      mesFaturaDaTransacao(t) === mes
     );
   });
 }
@@ -1196,6 +1250,13 @@ function temComprasAposFechamento(banco, mes) {
   return totalAtual > totalCongelado + 0.01;
 }
 
+/* 🔔 Verifica se o banco está com "fechar fatura" ativo e pra qual mês */
+function bancoEstaFechado(banco) {
+  const proximoMes = configUsuario.bancoProximoMesFatura?.[banco];
+  if (!proximoMes) return null;
+  return proximoMes;
+}
+
 function mesesFatura(banco) {
   const meses = new Set();
 
@@ -1203,10 +1264,10 @@ function mesesFatura(banco) {
     if (
       t.banco === banco &&
       t.modalidade === "Crédito" &&
-      t.tipo === "saida" &&
-      t.data
+      t.tipo === "saida"
     ) {
-      meses.add(t.data.substring(0, 7));
+      const mf = mesFaturaDaTransacao(t);
+      if (mf) meses.add(mf);
     }
   });
 
@@ -1228,6 +1289,10 @@ function mesesFatura(banco) {
     const mes = chave.substring(idx + 1);
     if (b === banco) meses.add(mes);
   });
+
+  // 🔔 Adiciona o mês "próximo" se o banco estiver fechado (pra aparecer fatura futura)
+  const proximoMes = bancoEstaFechado(banco);
+  if (proximoMes) meses.add(proximoMes);
 
   return [...meses].sort();
 }
@@ -1295,6 +1360,8 @@ window.faturaAtualDoBanco = faturaAtualDoBanco;
 window.carregarFaturasSalvas = carregarFaturasSalvas;
 window.salvarFatura = salvarFatura;
 window.getFaturasSalvas = () => faturasSalvas;
+window.bancoEstaFechado = bancoEstaFechado;
+window.mesFaturaDaTransacao = mesFaturaDaTransacao;
 
 /* =========================================================
    FATURAS — Modal e renderização
@@ -1353,6 +1420,10 @@ function renderListaFaturas(banco) {
 
       const temComprasPos = temComprasAposFechamento(banco, mes);
 
+      // 🔔 Verifica se este banco está com "fechar fatura" ativo
+      const proximoMes = bancoEstaFechado(banco);
+      const estaFechado = !!proximoMes;
+
       let detalheExtra = "";
       if (st === "paga" && salva?.dataPagamento) {
         detalheExtra = ` · Paga em ${formatarData(salva.dataPagamento)}`;
@@ -1371,6 +1442,16 @@ function renderListaFaturas(banco) {
         `;
       }
 
+      // 🔔 Aviso de banco fechado
+      let avisoFechado = "";
+      if (estaFechado) {
+        avisoFechado = `
+          <div style="margin-top:8px;padding:8px 12px;background:var(--primary-soft);border-radius:var(--r-sm);font-size:12px;color:var(--primary);">
+            🔒 Fatura fechada — novas compras vão pra <strong>${nomeMesAno(proximoMes)}</strong>.
+          </div>
+        `;
+      }
+
       const itensHtml = itens.length
         ? itens.map((i) => `
             <div class="fatura-item">
@@ -1383,9 +1464,15 @@ function renderListaFaturas(banco) {
           `).join("")
         : `<div class="fatura-vazia">Sem itens nesta fatura.</div>`;
 
+      // Botão pagar/desmarcar
       const botaoPagar = st === "paga"
-        ? `<button type="button" class="btn btn-ghost btn-block" onclick="pagarFatura('${escapeAttr(banco)}', '${mes}', event)">↺ Desmarcar pagamento</button>`
-        : `<button type="button" class="btn btn-primary btn-block" onclick="pagarFatura('${escapeAttr(banco)}', '${mes}', event)">✓ Pagar fatura</button>`;
+        ? `<button type="button" class="btn btn-ghost" onclick="pagarFatura('${escapeAttr(banco)}', '${mes}', event)">↺ Desmarcar pagamento</button>`
+        : `<button type="button" class="btn btn-primary" onclick="pagarFatura('${escapeAttr(banco)}', '${mes}', event)">✓ Pagar fatura</button>`;
+
+      // 🔔 Botão fechar/reabrir
+      const botaoFechar = estaFechado
+        ? `<button type="button" class="btn btn-ghost" onclick="reabrirFatura('${escapeAttr(banco)}', event)">↺ Reabrir fatura</button>`
+        : `<button type="button" class="btn btn-ghost" onclick="fecharFatura('${escapeAttr(banco)}', '${mes}', event)">🔒 Fechar fatura</button>`;
 
       return `
         <div class="fatura-card ${expandido}" data-mes="${mes}" data-banco="${escapeAttr(banco)}">
@@ -1414,8 +1501,10 @@ function renderListaFaturas(banco) {
               <span>${formatarMoeda(total)}</span>
             </div>
             ${aviso}
+            ${avisoFechado}
             <div class="fatura-actions">
               ${botaoPagar}
+              ${botaoFechar}
             </div>
           </div>
         </div>
@@ -1484,10 +1573,56 @@ async function pagarFatura(banco, mes, event) {
   }
 }
 
+/* 🔔 Fechar fatura → próximas compras vão pro mês seguinte */
+async function fecharFatura(banco, mesAtual, event) {
+  if (event) event.stopPropagation();
+
+  const mesProx = mesSeguinte(mesAtual);
+
+  if (!confirm(`Fechar a fatura de ${nomeMesAno(mesAtual)}?\n\nAs próximas compras no crédito desse banco vão pra fatura de ${nomeMesAno(mesProx)}.`)) {
+    return;
+  }
+
+  // Salva no config do usuário
+  if (!configUsuario.bancoProximoMesFatura) {
+    configUsuario.bancoProximoMesFatura = {};
+  }
+  configUsuario.bancoProximoMesFatura[banco] = mesProx;
+
+  await salvarConfiguracoes();
+
+  toast(`Fatura de ${nomeMesAno(mesAtual)} fechada. Próximas compras → ${nomeMesAno(mesProx)}.`, "success");
+
+  renderListaFaturas(banco);
+  renderFaturaCards();
+}
+
+/* 🔔 Reabrir fatura → volta ao comportamento normal */
+async function reabrirFatura(banco, event) {
+  if (event) event.stopPropagation();
+
+  if (!confirm(`Reabrir a fatura do ${banco}?\n\nAs próximas compras no crédito vão pro mês da data real.`)) {
+    return;
+  }
+
+  if (configUsuario.bancoProximoMesFatura) {
+    delete configUsuario.bancoProximoMesFatura[banco];
+  }
+
+  await salvarConfiguracoes();
+
+  toast(`Fatura do ${banco} reaberta.`, "info");
+
+  renderListaFaturas(banco);
+  renderFaturaCards();
+}
+
 window.abrirModalFaturas = abrirModalFaturas;
 window.renderListaFaturas = renderListaFaturas;
 window.toggleFaturaCard = toggleFaturaCard;
 window.pagarFatura = pagarFatura;
+window.fecharFatura = fecharFatura;
+window.reabrirFatura = reabrirFatura;
 
 /* =========================================================
    CORES PERSONALIZADAS
