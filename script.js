@@ -902,6 +902,24 @@ function limparFiltrosBeneficioUI() {
    FATURA
 ========================================================= */
 
+/* Retorna o valor já pago de faturas de um banco (todas as faturas com status "paga") */
+function totalFaturasPagasDoBanco(banco) {
+  let total = 0;
+  Object.keys(faturasSalvas).forEach((chave) => {
+    const idx = chave.lastIndexOf("_");
+    const b = chave.substring(0, idx);
+    if (b !== banco) return;
+
+    const salva = faturasSalvas[chave];
+    if (salva && salva.status === "paga" && salva.valorFechado != null) {
+      total += Number(salva.valorFechado) || 0;
+    }
+  });
+  return total;
+}
+
+window.totalFaturasPagasDoBanco = totalFaturasPagasDoBanco;
+
 function renderFaturaCards() {
   const container = $("faturaContainer");
   if (!container) return;
@@ -943,13 +961,21 @@ function renderFaturaCards() {
     });
   }
 
+  /* 🔔 NOVO: subtrai do saldo todas as faturas já pagas */
+  configUsuario.bancos.forEach((b) => {
+    const pago = totalFaturasPagasDoBanco(b);
+    saldosBancos[b] -= pago;
+  });
+
   container.innerHTML = configUsuario.bancos.map((b) => {
     const cor = coresPersonalizadas.bancos[b] || "#6366f1";
+    const saldo = saldosBancos[b];
+    const saldoClasse = saldo < 0 ? "saldo-negativo" : "";
     return `
       <div class="banco-card" style="background: linear-gradient(135deg, ${cor}, ${cor})" onclick="filtrarBancoCredito('${escapeAttr(b)}')">
         <div class="card-title">${escapeHtml(b)}</div>
         <div class="card-line"><span>Fatura</span><strong>${formatarMoeda(totaisFatura[b])}</strong></div>
-        <div class="card-line"><span>Saldo</span><strong>${formatarMoeda(saldosBancos[b])}</strong></div>
+        <div class="card-line ${saldoClasse}"><span>Saldo</span><strong>${formatarMoeda(saldo)}</strong></div>
         <div class="card-hint">Clique para ver compras →</div>
       </div>
     `;
