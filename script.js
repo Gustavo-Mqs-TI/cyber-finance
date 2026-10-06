@@ -478,11 +478,25 @@ function aplicarConfiguracoes() {
 ========================================================= */
 
 function iniciarModulos() {
-  if (typeof window.criptoIniciar === "function") window.criptoIniciar();
-  if (typeof window.parcelasIniciar === "function") window.parcelasIniciar();
-  if (typeof window.recorrentesIniciar === "function") window.recorrentesIniciar();
-  if (typeof window.metasIniciar === "function") window.metasIniciar();
-  if (typeof window.graficosIniciar === "function") window.graficosIniciar();
+  const modulos = {
+    criptoIniciar: window.criptoIniciar,
+    parcelasIniciar: window.parcelasIniciar,
+    recorrentesIniciar: window.recorrentesIniciar,
+    metasIniciar: window.metasIniciar,
+    graficosIniciar: window.graficosIniciar,
+  };
+
+  Object.entries(modulos).forEach(([nome, fn]) => {
+    if (typeof fn === "function") {
+      try {
+        fn();
+      } catch (e) {
+        console.error(`❌ Erro ao iniciar ${nome}:`, e);
+      }
+    } else {
+      console.warn(`⚠️ ${nome} não está disponível ainda`);
+    }
+  });
 }
 
 async function iniciarSessao() {
@@ -944,8 +958,6 @@ function renderFaturaCards() {
 
 function filtrarBancoCredito(nome) {
   bancoSelecionadoFatura = nome;
-
-  // 🔔 Abre o modal de faturas do banco
   abrirModalFaturas(nome);
 }
 
@@ -1248,91 +1260,104 @@ function renderListaFaturas(banco) {
   const container = $("listaFaturas");
   if (!container) return;
 
-  const meses = mesesFatura(banco);
+  try {
+    const meses = mesesFatura(banco);
 
-  if (meses.length === 0) {
-    container.innerHTML = `
-      <div class="fatura-vazia">
-        Nenhuma movimentação no crédito deste banco ainda.
-      </div>
-    `;
-    return;
-  }
-
-  container.innerHTML = meses.map((mes) => {
-    const st = statusFatura(banco, mes);
-    const total = totalFaturaExibir(banco, mes);
-    const itens = itensFatura(banco, mes);
-    const compras = itens.filter((i) => i.tipo === "compra").length;
-    const parcelas = itens.filter((i) => i.tipo === "parcela").length;
-    const chave = chaveFatura(banco, mes);
-    const salva = faturasSalvas[chave];
-    const badge = labelStatusFatura(st);
-    const expandido = faturaAbertaAtual === mes ? "expandido" : "";
-
-    const temComprasPos = temComprasAposFechamento(banco, mes);
-
-    let detalheExtra = "";
-    if (st === "paga" && salva?.dataPagamento) {
-      detalheExtra = ` · Paga em ${formatarData(salva.dataPagamento)}`;
-    } else if (st === "fechada" && salva?.dataFechamento) {
-      detalheExtra = ` · Fechada em ${formatarData(salva.dataFechamento)}`;
-    } else if (st === "futura") {
-      detalheExtra = " (estimado)";
-    }
-
-    let aviso = "";
-    if (temComprasPos) {
-      aviso = `
-        <div style="margin-top:8px;padding:8px 12px;background:var(--danger-soft);border-radius:var(--r-sm);font-size:12px;color:var(--danger);">
-          ⚠️ Há compras lançadas após o fechamento desta fatura.
+    if (meses.length === 0) {
+      container.innerHTML = `
+        <div class="fatura-vazia">
+          Nenhuma movimentação no crédito deste banco ainda.
         </div>
       `;
+      return;
     }
 
-    const itensHtml = itens.length
-      ? itens.map((i) => `
-          <div class="fatura-item">
-            <div class="fatura-item-desc">
-              ${escapeHtml(i.descricao)}
-              <small>${formatarData(i.data)} · ${i.tipo === "compra" ? "Compra" : "Parcela"}</small>
-            </div>
-            <div class="fatura-item-valor">${formatarMoeda(i.valor)}</div>
-          </div>
-        `).join("")
-      : `<div class="fatura-vazia">Sem itens nesta fatura.</div>`;
+    container.innerHTML = meses.map((mes) => {
+      const st = statusFatura(banco, mes);
+      const total = totalFaturaExibir(banco, mes);
+      const itens = itensFatura(banco, mes);
+      const compras = itens.filter((i) => i.tipo === "compra").length;
+      const parcelas = itens.filter((i) => i.tipo === "parcela").length;
+      const chave = chaveFatura(banco, mes);
+      const salva = faturasSalvas[chave];
+      const badge = labelStatusFatura(st);
+      const expandido = faturaAbertaAtual === mes ? "expandido" : "";
 
-    return `
-      <div class="fatura-card ${expandido}" data-mes="${mes}" data-banco="${escapeAttr(banco)}">
-        <div class="fatura-card-head" onclick="toggleFaturaCard('${escapeAttr(banco)}', '${mes}')">
-          <div class="fatura-card-info">
-            <div class="fatura-card-mes">
-              📅 ${nomeMesAno(mes)}
-              <span class="fatura-card-badge ${badge.classe}">${badge.label}</span>
-            </div>
-            <div class="fatura-card-valor">
-              ${formatarMoeda(total)}${detalheExtra}
-            </div>
-            <div class="fatura-card-detalhe">
-              Compras: ${compras} · Parcelas: ${parcelas}
-            </div>
-          </div>
-          <span class="fatura-card-arrow">▾</span>
-        </div>
+      const temComprasPos = temComprasAposFechamento(banco, mes);
 
-        <div class="fatura-card-body">
-          <div class="fatura-itens">
-            ${itensHtml}
+      let detalheExtra = "";
+      if (st === "paga" && salva?.dataPagamento) {
+        detalheExtra = ` · Paga em ${formatarData(salva.dataPagamento)}`;
+      } else if (st === "fechada" && salva?.dataFechamento) {
+        detalheExtra = ` · Fechada em ${formatarData(salva.dataFechamento)}`;
+      } else if (st === "futura") {
+        detalheExtra = " (estimado)";
+      }
+
+      let aviso = "";
+      if (temComprasPos) {
+        aviso = `
+          <div style="margin-top:8px;padding:8px 12px;background:var(--danger-soft);border-radius:var(--r-sm);font-size:12px;color:var(--danger);">
+            ⚠️ Há compras lançadas após o fechamento desta fatura.
           </div>
-          <div class="fatura-item-total">
-            <span>TOTAL</span>
-            <span>${formatarMoeda(total)}</span>
+        `;
+      }
+
+      const itensHtml = itens.length
+        ? itens.map((i) => `
+            <div class="fatura-item">
+              <div class="fatura-item-desc">
+                ${escapeHtml(i.descricao)}
+                <small>${formatarData(i.data)} · ${i.tipo === "compra" ? "Compra" : "Parcela"}</small>
+              </div>
+              <div class="fatura-item-valor">${formatarMoeda(i.valor)}</div>
+            </div>
+          `).join("")
+        : `<div class="fatura-vazia">Sem itens nesta fatura.</div>`;
+
+      const botaoPagar = st === "paga"
+        ? `<button type="button" class="btn btn-ghost btn-block" onclick="pagarFatura('${escapeAttr(banco)}', '${mes}', event)">↺ Desmarcar pagamento</button>`
+        : `<button type="button" class="btn btn-primary btn-block" onclick="pagarFatura('${escapeAttr(banco)}', '${mes}', event)">✓ Pagar fatura</button>`;
+
+      return `
+        <div class="fatura-card ${expandido}" data-mes="${mes}" data-banco="${escapeAttr(banco)}">
+          <div class="fatura-card-head" onclick="toggleFaturaCard('${escapeAttr(banco)}', '${mes}')">
+            <div class="fatura-card-info">
+              <div class="fatura-card-mes">
+                📅 ${nomeMesAno(mes)}
+                <span class="fatura-card-badge ${badge.classe}">${badge.label}</span>
+              </div>
+              <div class="fatura-card-valor">
+                ${formatarMoeda(total)}${detalheExtra}
+              </div>
+              <div class="fatura-card-detalhe">
+                Compras: ${compras} · Parcelas: ${parcelas}
+              </div>
+            </div>
+            <span class="fatura-card-arrow">▾</span>
           </div>
-          ${aviso}
+
+          <div class="fatura-card-body">
+            <div class="fatura-itens">
+              ${itensHtml}
+            </div>
+            <div class="fatura-item-total">
+              <span>TOTAL</span>
+              <span>${formatarMoeda(total)}</span>
+            </div>
+            ${aviso}
+            <div class="fatura-actions">
+              ${botaoPagar}
+            </div>
+          </div>
         </div>
-      </div>
-    `;
-  }).join("");
+      `;
+    }).join("");
+
+  } catch (err) {
+    console.error("❌ Erro em renderListaFaturas:", err);
+    container.innerHTML = `<div class="fatura-vazia">Erro ao carregar faturas: ${err.message}</div>`;
+  }
 }
 
 function toggleFaturaCard(banco, mes) {
@@ -1344,9 +1369,56 @@ function toggleFaturaCard(banco, mes) {
   renderListaFaturas(banco);
 }
 
+async function pagarFatura(banco, mes, event) {
+  if (event) event.stopPropagation();
+
+  const chave = chaveFatura(banco, mes);
+  const salva = faturasSalvas[chave] || {};
+  const jaPaga = salva.status === "paga";
+
+  const total = totalFaturaExibir(banco, mes);
+  const acao = jaPaga ? "desmarcar como paga" : "marcar como paga";
+
+  if (!confirm(`Deseja ${acao} a fatura de ${nomeMesAno(mes)} (${formatarMoeda(total)})?`)) {
+    return;
+  }
+
+  let dados;
+  if (jaPaga) {
+    dados = {
+      banco,
+      mes,
+      status: "aberta",
+      valorFechado: null,
+      dataFechamento: null,
+      dataPagamento: null,
+    };
+  } else {
+    dados = {
+      banco,
+      mes,
+      status: "paga",
+      valorFechado: total,
+      dataFechamento: salva.dataFechamento || dataHoje(),
+      dataPagamento: dataHoje(),
+    };
+  }
+
+  const ok = await salvarFatura(banco, mes, dados);
+
+  if (ok) {
+    toast(jaPaga ? "Pagamento desfeito" : "Fatura marcada como paga!", "success");
+    renderListaFaturas(banco);
+    renderFaturaCards();
+  } else {
+    toast("Não foi possível salvar. Verifique a conexão.", "error");
+  }
+}
+
 window.abrirModalFaturas = abrirModalFaturas;
 window.renderListaFaturas = renderListaFaturas;
 window.toggleFaturaCard = toggleFaturaCard;
+window.pagarFatura = pagarFatura;
 
 /* =========================================================
    CORES PERSONALIZADAS
@@ -1617,7 +1689,6 @@ window.addEventListener("parcelas-atualizadas", () => {
     renderFaturaCards();
   }
 
-  // Se modal de faturas estiver aberto, re-renderiza
   const modalFaturasAberto = $("modalFaturas")?.classList.contains("active");
   if (modalFaturasAberto && bancoSelecionadoFatura) {
     renderListaFaturas(bancoSelecionadoFatura);
