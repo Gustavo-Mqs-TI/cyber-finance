@@ -114,6 +114,20 @@ function mesAnterior(ref) {
 }
 
 /* =========================================================
+   VALIDAÇÃO DE BANCO POR MODALIDADE
+   - Benefícios (VR/VA/VT): banco opcional
+   - Dinheiro: banco opcional
+   - Demais (Pix, Débito, Crédito, etc): banco obrigatório
+========================================================= */
+
+function precisaBanco(tipo, modalidade) {
+  if (tipo !== "saida") return false;
+  if (configUsuario.beneficios.includes(modalidade)) return false;
+  if (modalidade === "Dinheiro") return false;
+  return true;
+}
+
+/* =========================================================
    TOASTS
 ========================================================= */
 
@@ -145,6 +159,7 @@ window.escapeAttr = escapeAttr;
 window.normalizarZero = normalizarZero;
 window.mesSeguinte = mesSeguinte;
 window.mesAnterior = mesAnterior;
+window.precisaBanco = precisaBanco;
 
 Object.defineProperty(window, "usuarioLogado", {
   get: () => usuarioLogado,
@@ -669,8 +684,9 @@ $("formGasto").addEventListener("submit", async (e) => {
     return;
   }
 
-  if (tipoVal === "saida" && !bancoVal) {
-    toast("Toda saída precisa de um banco cadastrado.", "error");
+  // 🔔 Só exige banco em saídas de modalidades "reais" (não-benefício, não-dinheiro)
+  if (precisaBanco(tipoVal, modVal) && !bancoVal) {
+    toast("Esta modalidade precisa de um banco cadastrado.", "error");
     return;
   }
 
@@ -740,14 +756,15 @@ $("formEditar").addEventListener("submit", async (e) => {
 
   const tipoVal = $("editarTipo").value;
   const bancoVal = $("editarBanco").value;
+  const modVal = $("editarModalidade").value;
 
-  if (tipoVal === "saida" && !bancoVal) {
-    toast("Toda saída precisa de um banco cadastrado.", "error");
+  // 🔔 Mesma validação: só exige banco em modalidades "reais"
+  if (precisaBanco(tipoVal, modVal) && !bancoVal) {
+    toast("Esta modalidade precisa de um banco cadastrado.", "error");
     return;
   }
 
   const dataVal = $("editarData").value;
-  const modVal = $("editarModalidade").value;
 
   const atualizada = {
     id,
@@ -847,6 +864,7 @@ function atualizarTabela() {
 
 /* =========================================================
    CÁLCULO UNIFICADO DE SALDO
+   Fonte única da verdade: soma dos cards === saldo geral
 ========================================================= */
 
 function calcularSaldosPorBanco() {
@@ -855,7 +873,11 @@ function calcularSaldosPorBanco() {
   let geral = 0;
 
   transacoes.forEach((t) => {
+    // Ignora benefícios (VR/VA/VT) — não entram em nenhum card nem no saldo geral
     if (configUsuario.beneficios.includes(t.modalidade)) return;
+    // Ignora Dinheiro — não tem banco associado
+    if (t.modalidade === "Dinheiro") return;
+    // Crédito só conta quando a fatura é paga
     if (t.tipo === "saida" && t.modalidade === "Crédito") return;
 
     const valor = t.tipo === "entrada" ? t.valor : -t.valor;
@@ -1252,17 +1274,14 @@ function temComprasAposFechamento(banco, mes) {
   return totalAtual > totalCongelado + 0.01;
 }
 
-/* 🔔 Retorna o mês que foi fechado do banco (ex: "2026-01") */
 function mesFechadoDoBanco(banco) {
   return configUsuario.faturasFechadas?.[banco] || null;
 }
 
-/* 🔔 Retorna o mês destino das próximas compras (ex: "2026-02") */
 function bancoEstaFechado(banco) {
   return configUsuario.bancoProximoMesFatura?.[banco] || null;
 }
 
-/* 🔔 Retorna TRUE se ESSE mês específico é o que foi fechado */
 function mesEstaFechado(banco, mes) {
   return mesFechadoDoBanco(banco) === mes;
 }
@@ -1300,7 +1319,6 @@ function mesesFatura(banco) {
     if (b === banco) meses.add(mes);
   });
 
-  // 🔔 Adiciona o mês que foi fechado (pra ele aparecer na lista)
   const mesFechado = mesFechadoDoBanco(banco);
   if (mesFechado) meses.add(mesFechado);
 
@@ -1432,11 +1450,7 @@ function renderListaFaturas(banco) {
 
       const temComprasPos = temComprasAposFechamento(banco, mes);
 
-      // 🔔 Destino das próximas compras (ou null)
       const proximoMesDestino = bancoEstaFechado(banco);
-      // 🔔 Mês que foi fechado (ou null)
-      const mesFechado = mesFechadoDoBanco(banco);
-      // 🔔 Só é "mês ativo de fechamento" se ESSE mês for o que foi fechado
       const estaFechado = mesEstaFechado(banco, mes);
 
       let detalheExtra = "";
@@ -1457,7 +1471,6 @@ function renderListaFaturas(banco) {
         `;
       }
 
-      // 🔔 Aviso de fatura fechada (só no mês que foi fechado)
       let avisoFechado = "";
       if (estaFechado && proximoMesDestino) {
         avisoFechado = `
@@ -1586,7 +1599,6 @@ async function pagarFatura(banco, mes, event) {
   }
 }
 
-/* 🔔 Fechar fatura → próximas compras vão pro mês seguinte */
 async function fecharFatura(banco, mesAtual, event) {
   if (event) event.stopPropagation();
 
@@ -1599,8 +1611,8 @@ async function fecharFatura(banco, mesAtual, event) {
   if (!configUsuario.bancoProximoMesFatura) configUsuario.bancoProximoMesFatura = {};
   if (!configUsuario.faturasFechadas) configUsuario.faturasFechadas = {};
 
-  configUsuario.bancoProximoMesFatura[banco] = mesProx;   // destino das próximas compras
-  configUsuario.faturasFechadas[banco] = mesAtual;        // mês que foi fechado
+  configUsuario.bancoProximoMesFatura[banco] = mesProx;
+  configUsuario.faturasFechadas[banco] = mesAtual;
 
   await salvarConfiguracoes();
 
@@ -1610,7 +1622,6 @@ async function fecharFatura(banco, mesAtual, event) {
   renderFaturaCards();
 }
 
-/* 🔔 Reabrir fatura → volta ao comportamento normal */
 async function reabrirFatura(banco, event) {
   if (event) event.stopPropagation();
 
