@@ -1413,6 +1413,70 @@
   </div>
 </div>
 
+<!-- MODAL: EDITAR COMPRA PARCELADA -->
+<div id="modalEditarParcela" class="modal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div>
+        <h2>Editar compra parcelada</h2>
+        <p>Atualize as informações da compra</p>
+      </div>
+      <button class="icon-btn fechar-modal" onclick="window.parcelaFecharEdicao()" aria-label="Fechar">×</button>
+    </div>
+
+    <form id="formEditarParcela" class="grid-form grid-form-modal">
+      <input type="hidden" id="editarParcelaId">
+
+      <div class="field field-span-2">
+        <label for="editarParcelaDescricao">Descrição</label>
+        <input type="text" id="editarParcelaDescricao" required>
+      </div>
+
+      <div class="field">
+        <label for="editarParcelaValor">Valor total (R$)</label>
+        <input type="number" id="editarParcelaValor" step="0.01" min="0" required>
+      </div>
+
+      <div class="field">
+        <label for="editarParcelaNumero">Nº de parcelas</label>
+        <input type="number" id="editarParcelaNumero" min="2" max="48" step="1" required>
+      </div>
+
+      <div class="field">
+        <label for="editarParcelaBanco">Banco (crédito)</label>
+        <select id="editarParcelaBanco" required>
+          <option value="">Selecione</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="editarParcelaData">Data da 1ª parcela</label>
+        <input type="date" id="editarParcelaData" required>
+      </div>
+
+      <div class="field">
+        <label for="editarParcelaCategoria">Categoria</label>
+        <input type="text" id="editarParcelaCategoria" placeholder="Ex: Eletrônicos">
+      </div>
+
+      <div class="field">
+        <label>Valor da parcela (auto)</label>
+        <input type="text" id="editarParcelaValorUnit" readonly placeholder="—" class="readonly-field">
+      </div>
+
+      <div class="field">
+        <label>Última parcela</label>
+        <input type="text" id="editarParcelaDataFim" readonly placeholder="—" class="readonly-field">
+      </div>
+
+      <div class="modal-actions field-span-2">
+        <button type="button" class="btn btn-ghost" onclick="window.parcelaFecharEdicao()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar alterações</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- MODAL: PERFIL -->
 <div id="telaPerfil" class="modal">
   <div class="modal-content">
@@ -1499,16 +1563,9 @@
 
 <!-- =========================================================
      SCRIPTS — ordem importa!
-     1) firebase.js    (módulo, carrega o SDK)
-     2) parcelas.js    (define window.parcelasIniciar etc)
-     3) criptos.js
-     4) recorrentes.js
-     5) metas.js
-     6) graficos.js
-     7) script.js      (por último — orquestra tudo)
 ========================================================= -->
 <script type="module" src="firebase.js"></script>
-<script type="module" src="parcelas.js"></script>
+<script type="module" src="parcelas.js?v=2"></script>
 <script type="module" src="criptos.js"></script>
 <script type="module" src="recorrentes.js"></script>
 <script type="module" src="metas.js"></script>
