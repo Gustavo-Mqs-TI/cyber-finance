@@ -74,8 +74,8 @@
       });
     }
 
-    /* 🔔 Fatura total: soma o total real de cada fatura em aberto/futura,
-       usando a mesma lógica do script.js (inclui parcelas). Ignora pagas. */
+    /* 🔔 Fatura total: soma o total real de cada fatura ABERTA (não paga, não futura).
+       Usa a lógica do script.js, então inclui parcelas automaticamente. */
     let faturaTotal = 0;
     if (typeof window.totalFaturaDinamico === "function" && typeof window.mesesFatura === "function") {
       const bancos = (window.configUsuario && window.configUsuario.bancos) || [];
@@ -83,7 +83,7 @@
         const meses = window.mesesFatura(b);
         meses.forEach((mes) => {
           const st = window.statusFatura ? window.statusFatura(b, mes) : "aberta";
-          if (st === "paga") return;
+          if (st !== "aberta") return;   // 🔔 só soma faturas ABERTAS
           faturaTotal += window.totalFaturaDinamico(b, mes);
         });
       });
@@ -288,8 +288,8 @@
   /* ============ GRÁFICO: FATURA ============ */
 
   function chartFatura() {
-    /* 🔔 Soma o total real de cada fatura em aberto/futura (inclui parcelas).
-       Ignora faturas pagas. Usa mesma lógica do script.js. */
+    /* 🔔 Soma o total real de cada fatura ABERTA (não paga, não futura).
+       Ignora futuras e pagas. Usa a mesma lógica do script.js. */
     const bancos = (window.configUsuario && window.configUsuario.bancos) || [];
     const porBanco = {};
 
@@ -299,7 +299,7 @@
         const meses = window.mesesFatura(b);
         meses.forEach((mes) => {
           const st = window.statusFatura ? window.statusFatura(b, mes) : "aberta";
-          if (st === "paga") return;
+          if (st !== "aberta") return;   // 🔔 só soma faturas ABERTAS
           total += window.totalFaturaDinamico(b, mes);
         });
         if (total > 0) porBanco[b] = total;
