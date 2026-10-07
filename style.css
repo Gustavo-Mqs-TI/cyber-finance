@@ -919,8 +919,31 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 .field-span-2 { grid-column: span 2; }
-.field-action { display: flex; align-items: flex-end; }
-.field-action .btn { width: 100%; height: 42px; }
+
+/* 🔧 Botão de ação: linha própria, alinhado à direita */
+.field-action {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  grid-column: 1 / -1;
+  margin-top: 4px;
+}
+
+.field-action .btn {
+  height: 42px;
+  min-width: 220px;
+}
+
+@media (max-width: 640px) {
+  .field-action {
+    justify-content: stretch;
+  }
+
+  .field-action .btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
 
 .grid-form-modal {
   grid-template-columns: repeat(2, 1fr);
@@ -2248,6 +2271,7 @@ select:-webkit-autofill:focus {
     flex-direction: column;
   }
 }
+
 .fatura-card.expandido:has(.fatura-card-badge.paga) .fatura-item-total {
   opacity: 0.75;
 }
