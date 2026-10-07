@@ -387,15 +387,20 @@
 
   /* =========================================================
      FORMULÁRIO
+     🔔 Regra: VALOR BRUTO já inclui a taxa.
+        Valor líquido = bruto − taxa (sempre).
+        Preço unitário = líquido / quantidade.
   ========================================================= */
 
   function camposAuto() {
     const q = parseFloat(document.getElementById("criptoQuantidade")?.value) || 0;
     const b = parseFloat(document.getElementById("criptoValorBruto")?.value) || 0;
     const t = parseFloat(document.getElementById("criptoTaxa")?.value) || 0;
-    const tp = document.getElementById("criptoTipo")?.value || "compra";
-    const liq = tp === "venda" ? b - t : b + t;
+
+    // 🔔 Valor bruto JÁ INCLUI a taxa — líquido é SEMPRE bruto − taxa
+    const liq = b - t;
     const pu = q > 0 ? liq / q : 0;
+
     const elL = document.getElementById("criptoValorLiquido");
     const elP = document.getElementById("criptoPrecoUnitario");
     if (elL) elL.value = liq > 0 ? money(liq) : "—";
@@ -430,7 +435,7 @@
   }
 
   /* =========================================================
-     EXPORTAR / IMPORTAR (local, igual antes)
+     EXPORTAR / IMPORTAR
   ========================================================= */
 
   function exportarJSON() {
@@ -606,13 +611,15 @@
 
         if (!data || !cripto || !q || !b) { toastSafe("Preencha todos os campos obrigatórios", "error"); return; }
         if (q <= 0 || b <= 0) { toastSafe("Quantidade e valor devem ser maiores que zero", "error"); return; }
+        if (t < 0 || t >= b) { toastSafe("A taxa não pode ser maior ou igual ao valor bruto", "error"); return; }
 
         if (tipo === "venda") {
           const qd = qtdDisponivelNaData(cripto, data);
           if (q > qd + 1e-9) { toastSafe(`Você só tem ${qtdFmt(qd)} ${cripto} até essa data`, "error"); return; }
         }
 
-        const liq = tipo === "venda" ? b - t : b + t;
+        // 🔔 Valor bruto já inclui a taxa → líquido = bruto − taxa
+        const liq = b - t;
         const nova = {
           id: cid(), data, tipo, cripto, quantidade: q,
           valorBruto: b, taxa: t, valorLiquido: liq, observacao: obs,
