@@ -1477,6 +1477,76 @@
   </div>
 </div>
 
+<!-- MODAL: EDITAR OPERAÇÃO CRIPTO -->
+<div id="modalEditarCripto" class="modal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div>
+        <h2>Editar operação cripto</h2>
+        <p>Atualize as informações da operação</p>
+      </div>
+      <button class="icon-btn fechar-modal" onclick="window.criptoFecharEdicao()" aria-label="Fechar">×</button>
+    </div>
+
+    <form id="formEditarCripto" class="grid-form grid-form-modal">
+      <input type="hidden" id="editarCriptoId">
+
+      <div class="field">
+        <label for="editarCriptoData">Data</label>
+        <input type="date" id="editarCriptoData" required>
+      </div>
+
+      <div class="field">
+        <label for="editarCriptoTipo">Tipo</label>
+        <select id="editarCriptoTipo" required>
+          <option value="compra">Compra</option>
+          <option value="venda">Venda</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="editarCriptoMoeda">Cripto</label>
+        <input type="text" id="editarCriptoMoeda" required maxlength="10" style="text-transform:uppercase;">
+      </div>
+
+      <div class="field">
+        <label for="editarCriptoQuantidade">Quantidade</label>
+        <input type="number" id="editarCriptoQuantidade" step="any" min="0" required>
+      </div>
+
+      <div class="field">
+        <label for="editarCriptoValorBruto">Valor Bruto (R$)</label>
+        <input type="number" id="editarCriptoValorBruto" step="0.01" min="0" required>
+      </div>
+
+      <div class="field">
+        <label for="editarCriptoTaxa">Taxa (R$)</label>
+        <input type="number" id="editarCriptoTaxa" step="0.01" min="0" value="0">
+      </div>
+
+      <div class="field">
+        <label>Preço unitário (auto)</label>
+        <input type="text" id="editarCriptoPrecoUnitario" readonly placeholder="—" class="readonly-field">
+      </div>
+
+      <div class="field">
+        <label>Valor líquido (auto)</label>
+        <input type="text" id="editarCriptoValorLiquido" readonly placeholder="—" class="readonly-field">
+      </div>
+
+      <div class="field field-span-2">
+        <label for="editarCriptoObservacao">Observação (opcional)</label>
+        <input type="text" id="editarCriptoObservacao" placeholder="Ex: corretora Binance">
+      </div>
+
+      <div class="modal-actions field-span-2">
+        <button type="button" class="btn btn-ghost" onclick="window.criptoFecharEdicao()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar alterações</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- MODAL: PERFIL -->
 <div id="telaPerfil" class="modal">
   <div class="modal-content">
@@ -1565,8 +1635,8 @@
      SCRIPTS — ordem importa!
 ========================================================= -->
 <script type="module" src="firebase.js"></script>
-<script type="module" src="parcelas.js?v=2"></script>
-<script type="module" src="criptos.js"></script>
+<script type="module" src="parcelas.v2.js"></script>
+<script type="module" src="criptos.v2.js"></script>
 <script type="module" src="recorrentes.js"></script>
 <script type="module" src="metas.js"></script>
 <script type="module" src="graficos.js"></script>
