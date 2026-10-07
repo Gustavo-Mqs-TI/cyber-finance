@@ -74,10 +74,20 @@
       });
     }
 
+    /* 🔔 Fatura total: soma o total real de cada fatura em aberto/futura,
+       usando a mesma lógica do script.js (inclui parcelas). Ignora pagas. */
     let faturaTotal = 0;
-    trans.forEach((t) => {
-      if (t.modalidade === "Crédito" && t.tipo === "saida") faturaTotal += t.valor;
-    });
+    if (typeof window.totalFaturaDinamico === "function" && typeof window.mesesFatura === "function") {
+      const bancos = (window.configUsuario && window.configUsuario.bancos) || [];
+      bancos.forEach((b) => {
+        const meses = window.mesesFatura(b);
+        meses.forEach((mes) => {
+          const st = window.statusFatura ? window.statusFatura(b, mes) : "aberta";
+          if (st === "paga") return;
+          faturaTotal += window.totalFaturaDinamico(b, mes);
+        });
+      });
+    }
 
     const elS = document.getElementById("graficoSaldo");
     const elE = document.getElementById("graficoEntradas");
@@ -278,14 +288,23 @@
   /* ============ GRÁFICO: FATURA ============ */
 
   function chartFatura() {
-    const { inicio, fim } = getPeriodo();
-    const trans = transNoPeriodo(inicio, fim).filter((t) => t.modalidade === "Crédito" && t.tipo === "saida");
-
+    /* 🔔 Soma o total real de cada fatura em aberto/futura (inclui parcelas).
+       Ignora faturas pagas. Usa mesma lógica do script.js. */
+    const bancos = (window.configUsuario && window.configUsuario.bancos) || [];
     const porBanco = {};
-    trans.forEach((t) => {
-      const b = t.banco || "Sem banco";
-      porBanco[b] = (porBanco[b] || 0) + t.valor;
-    });
+
+    if (typeof window.totalFaturaDinamico === "function" && typeof window.mesesFatura === "function") {
+      bancos.forEach((b) => {
+        let total = 0;
+        const meses = window.mesesFatura(b);
+        meses.forEach((mes) => {
+          const st = window.statusFatura ? window.statusFatura(b, mes) : "aberta";
+          if (st === "paga") return;
+          total += window.totalFaturaDinamico(b, mes);
+        });
+        if (total > 0) porBanco[b] = total;
+      });
+    }
 
     const labels = Object.keys(porBanco);
     const valores = Object.values(porBanco);
