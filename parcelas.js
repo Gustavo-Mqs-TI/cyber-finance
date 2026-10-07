@@ -200,6 +200,14 @@
           <td class="text-right">
             <div class="row-actions">
               <span class="status-badge ${st}" style="margin-right:6px;">${stL}</span>
+              ${pg < c.numeroParcelas ? `
+                <button class="action-btn" onclick="window.parcelaEditar(${c.id})" title="Editar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
+              ` : ""}
               <button class="action-btn danger" onclick="window.parcelaExcluir(${c.id})" title="Excluir">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
               </button>
@@ -210,7 +218,6 @@
     }).join("");
   }
 
-  /* 🔔 NOVO: renderTudo agora dispara evento pra atualizar a fatura */
   function renderTudo() {
     renderResumo();
     renderTabela();
@@ -218,7 +225,7 @@
   }
 
   /* =========================================================
-     FORMULÁRIO
+     FORMULÁRIO — NOVA COMPRA
   ========================================================= */
 
   function preencherSelects() {
@@ -253,6 +260,127 @@
     if (elU) elU.value = "";
     if (elF) elF.value = "";
   }
+
+  /* =========================================================
+     EDITAR COMPRA PARCELADA
+  ========================================================= */
+
+  function abrirModalEditarParcela(idC) {
+    const c = parcelas.find((p) => p.id === idC);
+    if (!c) return;
+
+    const elId = document.getElementById("editarParcelaId");
+    const elDesc = document.getElementById("editarParcelaDescricao");
+    const elValor = document.getElementById("editarParcelaValor");
+    const elNum = document.getElementById("editarParcelaNumero");
+    const elBanco = document.getElementById("editarParcelaBanco");
+    const elData = document.getElementById("editarParcelaData");
+    const elCat = document.getElementById("editarParcelaCategoria");
+
+    if (elId) elId.value = c.id;
+    if (elDesc) elDesc.value = c.descricao;
+    if (elValor) elValor.value = c.valorTotal;
+    if (elNum) elNum.value = c.numeroParcelas;
+    if (elData) elData.value = c.dataPrimeira;
+    if (elCat) elCat.value = c.categoria || "";
+
+    if (elBanco) {
+      const bancos = (window.configUsuario && window.configUsuario.bancos) || [];
+      elBanco.innerHTML = '<option value="">Selecione</option>';
+      bancos.forEach((b) => {
+        elBanco.innerHTML += `<option value="${escapeHtmlSafe(b)}">${escapeHtmlSafe(b)}</option>`;
+      });
+      elBanco.value = c.banco;
+    }
+
+    atualizarCamposAutoEditarParcela();
+
+    const modal = document.getElementById("modalEditarParcela");
+    if (modal) modal.classList.add("active");
+  }
+
+  function atualizarCamposAutoEditarParcela() {
+    const val = parseFloat(document.getElementById("editarParcelaValor")?.value) || 0;
+    const n = parseInt(document.getElementById("editarParcelaNumero")?.value) || 0;
+    const d = document.getElementById("editarParcelaData")?.value;
+
+    const elU = document.getElementById("editarParcelaValorUnit");
+    const elF = document.getElementById("editarParcelaDataFim");
+
+    if (elU) elU.value = n > 0 && val > 0 ? money(val / n) : "—";
+    if (elF && n > 1 && d) elF.value = formatarDataSafe(addMonths(d, n - 1));
+    else if (elF) elF.value = "—";
+  }
+
+  async function salvarEdicaoParcela(e) {
+    if (e) e.preventDefault();
+
+    const idC = parseInt(document.getElementById("editarParcelaId").value);
+    const idx = parcelas.findIndex((p) => p.id === idC);
+    if (idx === -1) return;
+
+    const d_ = document.getElementById("editarParcelaDescricao").value.trim();
+    const vT = parseFloat(document.getElementById("editarParcelaValor").value);
+    const nP = parseInt(document.getElementById("editarParcelaNumero").value);
+    const b = document.getElementById("editarParcelaBanco").value;
+    const dp = document.getElementById("editarParcelaData").value;
+    const cat = document.getElementById("editarParcelaCategoria").value.trim();
+
+    if (!d_ || !vT || !nP || !b || !dp) {
+      toastSafe("Preencha todos os campos obrigatórios", "error");
+      return;
+    }
+    if (vT <= 0) {
+      toastSafe("Valor deve ser maior que zero", "error");
+      return;
+    }
+    if (nP < 2 || nP > 48) {
+      toastSafe("Nº de parcelas entre 2 e 48", "error");
+      return;
+    }
+
+    const original = parcelas[idx];
+
+    const atualizada = {
+      ...original,
+      descricao: d_,
+      valorTotal: vT,
+      numeroParcelas: nP,
+      banco: b,
+      dataPrimeira: dp,
+      categoria: cat,
+    };
+
+    if (original._fbId && window.usuarioLogado) {
+      try {
+        const dados = { ...atualizada };
+        delete dados._fbId;
+        delete dados.id;
+        await window.fbAtualizarItem(window.usuarioLogado.uid, "parcelas", original._fbId, dados);
+      } catch (err) {
+        console.warn("Erro ao salvar no Firestore:", err);
+        toastSafe("Erro ao salvar no servidor", "error");
+        return;
+      }
+    }
+
+    parcelas[idx] = atualizada;
+
+    fecharModalEditarParcela();
+    toastSafe("Compra parcelada atualizada!", "success");
+
+    renderTudo();
+    if (typeof window.renderFaturaCards === "function") window.renderFaturaCards();
+  }
+
+  function fecharModalEditarParcela() {
+    const modal = document.getElementById("modalEditarParcela");
+    if (modal) modal.classList.remove("active");
+  }
+
+  /* =========================================================
+     EXCLUIR
+  ========================================================= */
 
   async function excluir(idC) {
     const c = parcelas.find((p) => p.id === idC);
@@ -320,6 +448,21 @@
       });
     }
 
+    /* Listener do formulário de edição */
+    const formEdit = document.getElementById("formEditarParcela");
+    if (formEdit) {
+      formEdit.addEventListener("submit", salvarEdicaoParcela);
+    }
+
+    /* Listener dos campos auto no modal de edição */
+    ["editarParcelaValor", "editarParcelaNumero", "editarParcelaData"].forEach((idC) => {
+      const el = document.getElementById(idC);
+      if (el) {
+        el.addEventListener("input", atualizarCamposAutoEditarParcela);
+        el.addEventListener("change", atualizarCamposAutoEditarParcela);
+      }
+    });
+
     renderTudo();
   }
 
@@ -338,6 +481,10 @@
   window.parcelasIniciar = iniciar;
   window.parcelasRenderTudo = renderTudo;
   window.parcelaExcluir = excluir;
+  window.parcelaEditar = abrirModalEditarParcela;
+  window.parcelaSalvarEdicao = salvarEdicaoParcela;
+  window.parcelaFecharEdicao = fecharModalEditarParcela;
+  window.parcelaAtualizarAuto = atualizarCamposAutoEditarParcela;
   window.parcelasDoMes = parcelasDoMes;
   window.totalParcelasPorBancoNoMes = totalPorBancoNoMes;
   window.parcelasGetTodas = () => parcelas;
