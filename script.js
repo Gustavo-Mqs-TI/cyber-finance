@@ -920,10 +920,18 @@ function atualizarResumo() {
   let entrada = 0;
   let saida = 0;
 
+  // 1) Lançamentos normais — crédito fica fora (vira saída só quando a fatura é paga)
   transacoes.forEach((t) => {
     if (configUsuario.beneficios.includes(t.modalidade)) return;
     if (t.tipo === "entrada") entrada += t.valor;
     else if (t.tipo === "saida" && t.modalidade !== "Crédito") saida += t.valor;
+  });
+
+  // 2) Faturas pagas entram como saída — é o momento em que o dinheiro realmente sai
+  Object.keys(faturasSalvas).forEach((chave) => {
+    const salva = faturasSalvas[chave];
+    if (!salva || salva.status !== "paga" || salva.valorFechado == null) return;
+    saida += Number(salva.valorFechado) || 0;
   });
 
   $("totalEntrada").textContent = formatarMoeda(entrada);
