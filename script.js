@@ -37,6 +37,7 @@ let coresPersonalizadas = {
   saldo: "#6366f1",
   beneficios: {},
   bancos: {},
+  criptos: {},
 };
 
 let beneficioSelecionado = null;
@@ -115,9 +116,6 @@ function mesAnterior(ref) {
 
 /* =========================================================
    VALIDAÇÃO DE BANCO POR MODALIDADE
-   - Benefícios (VR/VA/VT): banco opcional
-   - Dinheiro: banco opcional
-   - Demais (Pix, Débito, Crédito, etc): banco obrigatório
 ========================================================= */
 
 function precisaBanco(tipo, modalidade) {
@@ -609,6 +607,7 @@ async function logout() {
     saldo: "#6366f1",
     beneficios: {},
     bancos: {},
+    criptos: {},
   };
   beneficioSelecionado = null;
   transacoesOriginais = [];
@@ -688,7 +687,6 @@ $("formGasto").addEventListener("submit", async (e) => {
     return;
   }
 
-  // 🔔 Só exige banco em saídas de modalidades "reais" (não-benefício, não-dinheiro)
   if (precisaBanco(tipoVal, modVal) && !bancoVal) {
     toast("Esta modalidade precisa de um banco cadastrado.", "error");
     return;
@@ -704,7 +702,6 @@ $("formGasto").addEventListener("submit", async (e) => {
     data: dataVal,
   };
 
-  // 🔔 Se for CRÉDITO, decide em qual fatura a compra entra
   if (tipoVal === "saida" && modVal === "Crédito" && bancoVal) {
     const proximoMes = configUsuario.bancoProximoMesFatura?.[bancoVal];
     nova._mesFatura = proximoMes || dataVal.substring(0, 7);
@@ -762,7 +759,6 @@ $("formEditar").addEventListener("submit", async (e) => {
   const bancoVal = $("editarBanco").value;
   const modVal = $("editarModalidade").value;
 
-  // 🔔 Mesma validação: só exige banco em modalidades "reais"
   if (precisaBanco(tipoVal, modVal) && !bancoVal) {
     toast("Esta modalidade precisa de um banco cadastrado.", "error");
     return;
@@ -868,7 +864,6 @@ function atualizarTabela() {
 
 /* =========================================================
    CÁLCULO UNIFICADO DE SALDO
-   Fonte única da verdade: soma dos cards === saldo geral
 ========================================================= */
 
 function calcularSaldosPorBanco() {
@@ -877,11 +872,8 @@ function calcularSaldosPorBanco() {
   let geral = 0;
 
   transacoes.forEach((t) => {
-    // Ignora benefícios (VR/VA/VT) — não entram em nenhum card nem no saldo geral
     if (configUsuario.beneficios.includes(t.modalidade)) return;
-    // Ignora Dinheiro — não tem banco associado
     if (t.modalidade === "Dinheiro") return;
-    // Crédito só conta quando a fatura é paga
     if (t.tipo === "saida" && t.modalidade === "Crédito") return;
 
     const valor = t.tipo === "entrada" ? t.valor : -t.valor;
@@ -931,7 +923,7 @@ function atualizarResumo() {
     else if (t.tipo === "saida" && t.modalidade !== "Crédito") saida += t.valor;
   });
 
-  // 2) Faturas pagas entram como saída — é o momento em que o dinheiro realmente sai
+  // 2) Faturas pagas entram como saída
   Object.keys(faturasSalvas).forEach((chave) => {
     const salva = faturasSalvas[chave];
     if (!salva || salva.status !== "paga" || salva.valorFechado == null) return;
@@ -1607,7 +1599,7 @@ async function pagarFatura(banco, mes, event) {
     renderFaturaCards();
     atualizarResumo();
 
-    // 🔔 Se a aba Gráficos estiver visível, atualiza as cores/faturas
+    // 🔔 Se a aba Gráficos estiver visível, atualiza
     if (typeof window.graficosRenderTudo === "function") {
       window.graficosRenderTudo();
     }
@@ -1723,6 +1715,14 @@ $("formCores").addEventListener("submit", async (e) => {
     coresPersonalizadas.bancos[inp.dataset.nome] = inp.value;
   });
 
+  // 🔔 Criptos — cobre variações de classe/atributo
+  document.querySelectorAll(".cor-cripto-input, .cor-criptos-input, [data-cripto]").forEach((inp) => {
+    const nome = inp.dataset.nome || inp.dataset.cripto || inp.name;
+    if (!nome) return;
+    if (!coresPersonalizadas.criptos) coresPersonalizadas.criptos = {};
+    coresPersonalizadas.criptos[nome.toUpperCase()] = inp.value;
+  });
+
   await salvarCores();
   aplicarCores();
 
@@ -1730,7 +1730,7 @@ $("formCores").addEventListener("submit", async (e) => {
     window.criptoAplicarCoresDoModal();
   }
 
-  // 🔔 Atualiza os gráficos em tempo real com as novas cores
+  // 🔔 Atualiza os gráficos em tempo real
   if (typeof window.graficosAplicarCores === "function") {
     window.graficosAplicarCores();
   }
