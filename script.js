@@ -916,7 +916,7 @@ function atualizarResumo() {
   let entrada = 0;
   let saida = 0;
 
-  // 1) Lançamentos normais — crédito fica fora (vira saída só quando a fatura é paga)
+  // 1) Lançamentos normais — crédito fica fora
   transacoes.forEach((t) => {
     if (configUsuario.beneficios.includes(t.modalidade)) return;
     if (t.tipo === "entrada") entrada += t.valor;
@@ -1599,7 +1599,6 @@ async function pagarFatura(banco, mes, event) {
     renderFaturaCards();
     atualizarResumo();
 
-    // 🔔 Se a aba Gráficos estiver visível, atualiza
     if (typeof window.graficosRenderTudo === "function") {
       window.graficosRenderTudo();
     }
@@ -1665,6 +1664,7 @@ window.reabrirFatura = reabrirFatura;
 function abrirPersonalizacaoCores() {
   fecharTodosModais();
 
+  /* ---------- Benefícios ---------- */
   const listaB = $("listaCoresBeneficios");
   if (listaB) {
     listaB.innerHTML = configUsuario.beneficios.length
@@ -1677,6 +1677,7 @@ function abrirPersonalizacaoCores() {
       : `<div class="empty-cards">Nenhum benefício cadastrado</div>`;
   }
 
+  /* ---------- Bancos ---------- */
   const listaBc = $("listaCoresBancos");
   if (listaBc) {
     listaBc.innerHTML = configUsuario.bancos.length
@@ -1689,13 +1690,36 @@ function abrirPersonalizacaoCores() {
       : `<div class="empty-cards">Nenhum banco cadastrado</div>`;
   }
 
+  /* ---------- 🔔 CRIPTOS: renderizado aqui mesmo ---------- */
+  const listaCr = $("listaCoresCriptos");
+  if (listaCr) {
+    let moedas = [];
+    if (typeof window.criptoGetOperacoes === "function") {
+      const ops = window.criptoGetOperacoes() || [];
+      const set = new Set();
+      ops.forEach((o) => {
+        if (o && o.cripto) set.add(String(o.cripto).toUpperCase());
+      });
+      moedas = [...set].sort();
+    }
+
+    if (moedas.length === 0) {
+      listaCr.innerHTML = `<div class="empty-cards">Nenhuma cripto com operações cadastradas</div>`;
+    } else {
+      if (!coresPersonalizadas.criptos) coresPersonalizadas.criptos = {};
+      listaCr.innerHTML = moedas.map((m) => `
+        <div class="color-item">
+          <span>${escapeHtml(m)}</span>
+          <input type="color" class="cor-cripto-input" data-nome="${escapeAttr(m)}" value="${coresPersonalizadas.criptos[m] || "#6366f1"}">
+        </div>
+      `).join("");
+    }
+  }
+
+  /* ---------- Cores gerais ---------- */
   $("corEntrada").value = coresPersonalizadas.entrada;
   $("corSaida").value = coresPersonalizadas.saida;
   $("corSaldo").value = coresPersonalizadas.saldo;
-
-  if (typeof window.renderListaCoresCriptos === "function") {
-    window.renderListaCoresCriptos();
-  }
 
   $("telaCores").classList.add("active");
 }
@@ -1715,9 +1739,9 @@ $("formCores").addEventListener("submit", async (e) => {
     coresPersonalizadas.bancos[inp.dataset.nome] = inp.value;
   });
 
-  // 🔔 Criptos — cobre variações de classe/atributo
-  document.querySelectorAll(".cor-cripto-input, .cor-criptos-input, [data-cripto]").forEach((inp) => {
-    const nome = inp.dataset.nome || inp.dataset.cripto || inp.name;
+  // 🔔 Criptos — lê os inputs que o próprio script.js renderizou
+  document.querySelectorAll(".cor-cripto-input").forEach((inp) => {
+    const nome = inp.dataset.nome;
     if (!nome) return;
     if (!coresPersonalizadas.criptos) coresPersonalizadas.criptos = {};
     coresPersonalizadas.criptos[nome.toUpperCase()] = inp.value;
