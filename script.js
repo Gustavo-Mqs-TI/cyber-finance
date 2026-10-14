@@ -193,6 +193,9 @@ function aplicarTema(tema) {
 function alternarTema() {
   const atual = document.documentElement.getAttribute("data-theme") || "dark";
   aplicarTema(atual === "dark" ? "light" : "dark");
+
+  // 🔔 Avisa os gráficos pra se redesenharem com o novo tema
+  window.dispatchEvent(new Event("financa-tema-mudou"));
 }
 
 /* =========================================================
@@ -397,6 +400,7 @@ async function carregarCores() {
       saldo: c.saldo || "#6366f1",
       beneficios: c.beneficios || {},
       bancos: c.bancos || {},
+      criptos: c.criptos || {},
     };
   }
 }
@@ -1602,6 +1606,11 @@ async function pagarFatura(banco, mes, event) {
     renderListaFaturas(banco);
     renderFaturaCards();
     atualizarResumo();
+
+    // 🔔 Se a aba Gráficos estiver visível, atualiza as cores/faturas
+    if (typeof window.graficosRenderTudo === "function") {
+      window.graficosRenderTudo();
+    }
   } else {
     toast("Não foi possível salvar. Verifique a conexão.", "error");
   }
@@ -1719,6 +1728,11 @@ $("formCores").addEventListener("submit", async (e) => {
 
   if (typeof window.criptoAplicarCoresDoModal === "function") {
     window.criptoAplicarCoresDoModal();
+  }
+
+  // 🔔 Atualiza os gráficos em tempo real com as novas cores
+  if (typeof window.graficosAplicarCores === "function") {
+    window.graficosAplicarCores();
   }
 
   toast("Cores salvas com sucesso!", "success");
