@@ -56,6 +56,27 @@
     };
   }
 
+  /* 🔔 Normaliza chave pra comparação (remove acentos, espaços, case) */
+  function normalizarChave(s) {
+    return String(s || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+  }
+
+  /* 🔔 Busca cor em um mapa, ignorando case/acentos/espaços */
+  function corDoMapa(mapa, chave, fallback) {
+    if (!mapa || !chave) return fallback;
+    if (mapa[chave]) return mapa[chave]; // match exato primeiro
+
+    const alvo = normalizarChave(chave);
+    for (const k of Object.keys(mapa)) {
+      if (normalizarChave(k) === alvo) return mapa[k];
+    }
+    return fallback;
+  }
+
   /* Converte hex (#6366f1) em rgba(99,102,241,alpha) */
   function hexParaRgba(hex, alpha) {
     if (!hex || typeof hex !== "string") return `rgba(99,102,241,${alpha})`;
@@ -67,22 +88,28 @@
     return `rgba(${r},${g},${b},${alpha})`;
   }
 
-  /* Mapa de cores por banco (usa coresPersonalizadas.bancos[nome]) */
+  /* Mapa de cores por banco */
   function coresPorBanco(labels) {
     const cores = getCores();
-    return labels.map((label, i) => cores.bancos[label] || PALETA_AUTO[i % PALETA_AUTO.length]);
+    return labels.map((label, i) =>
+      corDoMapa(cores.bancos, label, PALETA_AUTO[i % PALETA_AUTO.length])
+    );
   }
 
   /* Mapa de cores por benefício */
   function coresPorBeneficio(labels) {
     const cores = getCores();
-    return labels.map((label, i) => cores.beneficios[label] || PALETA_AUTO[i % PALETA_AUTO.length]);
+    return labels.map((label, i) =>
+      corDoMapa(cores.beneficios, label, PALETA_AUTO[i % PALETA_AUTO.length])
+    );
   }
 
-  /* Mapa de cores por cripto (se existir) ou paleta automática */
+  /* Mapa de cores por cripto */
   function coresPorCripto(labels) {
     const cores = getCores();
-    return labels.map((label, i) => cores.criptos[label] || PALETA_AUTO[i % PALETA_AUTO.length]);
+    return labels.map((label, i) =>
+      corDoMapa(cores.criptos, label, PALETA_AUTO[i % PALETA_AUTO.length])
+    );
   }
 
   /* ============ PERÍODO ============ */
@@ -205,12 +232,33 @@
 
   function chartBancos() {
     const { inicio, fim } = getPeriodo();
-    const trans = transNoPeriodo(inicio, fim).filter((t) => t.tipo === "saida");
+    const trans = transNoPeriodo(inicio, fim);
 
     const porBanco = {};
+
+    // Saídas normais (débito, pix, boleto, fora do crédito)
     trans.forEach((t) => {
+      if (t.tipo !== "saida") return;
+      if (t.modalidade === "Crédito") return;
       const b = t.banco || "Sem banco";
       porBanco[b] = (porBanco[b] || 0) + t.valor;
+    });
+
+    // 🔔 Faturas pagas no período — entram como gasto do banco
+    const faturasSalvas = window.getFaturasSalvas ? window.getFaturasSalvas() : {};
+    const bancos = (window.configUsuario && window.configUsuario.bancos) || [];
+    bancos.forEach((b) => {
+      Object.keys(faturasSalvas).forEach((chave) => {
+        const idx = chave.lastIndexOf("_");
+        const bancoChave = chave.substring(0, idx);
+        const mes = chave.substring(idx + 1);
+        if (bancoChave !== b) return;
+        const salva = faturasSalvas[chave];
+        if (!salva || salva.status !== "paga" || salva.valorFechado == null) return;
+        const refMes = `${mes}-01`;
+        if (refMes < inicio || refMes > fim) return;
+        porBanco[b] = (porBanco[b] || 0) + (Number(salva.valorFechado) || 0);
+      });
     });
 
     const labels = Object.keys(porBanco);
@@ -422,7 +470,6 @@
   function chartBeneficios() {
     const beneficios = (window.configUsuario && window.configUsuario.beneficios) || [];
     const trans = window.transacoes || [];
-    const cores = getCores();
 
     const labels = [];
     const valores = [];
@@ -494,8 +541,6 @@
 
   /* =========================================================
      🔔 APLICAR CORES EM TEMPO REAL
-     Atualiza só as cores dos datasets já existentes e chama update()
-     — evita destruir/recriar os gráficos toda vez
   ========================================================= */
 
   function aplicarCores() {
@@ -603,12 +648,12 @@
     }, 100);
   });
 
-  /* 🔔 Escuta mudanças de tema (que afetam cores de texto/grid dos gráficos) */
+  /* 🔔 Escuta mudanças de tema */
   window.addEventListener("financa-tema-mudou", () => {
     if (graficosInicializado) renderTudo();
   });
 
-  /* 🔔 API pública — usada pelo script.js quando as cores são salvas */
+  /* 🔔 API pública */
   window.graficosIniciar = iniciar;
   window.graficosRenderTudo = renderTudo;
   window.graficosAplicarCores = aplicarCores;
