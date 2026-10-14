@@ -1,5 +1,6 @@
 /* =========================================================
    FINANÇA — Módulo Gráficos (Chart.js)
+   🔔 Cores vindas de window.coresPersonalizadas
 ========================================================= */
 
 (function () {
@@ -25,12 +26,66 @@
   function getTextColor() { return cssVar("--text", "#f1f5f9"); }
   function getMutedColor() { return cssVar("--text-muted", "#94a3b8"); }
   function getGridColor() { return cssVar("--border", "rgba(148,163,184,.1)"); }
+  function getSurfaceColor() { return cssVar("--surface", "#141a2e"); }
 
-  const PALETA = [
+  /* =========================================================
+     CORES PERSONALIZADAS
+  ========================================================= */
+
+  const CORES_FALLBACK = {
+    entrada: "#10b981",
+    saida: "#ef4444",
+    saldo: "#6366f1",
+  };
+
+  const PALETA_AUTO = [
     "#6366f1", "#10b981", "#ef4444", "#f59e0b", "#8b5cf6",
     "#ec4899", "#14b8a6", "#06b6d4", "#f97316", "#84cc16",
     "#22c55e", "#eab308", "#e11d48", "#0891b2", "#a855f7",
   ];
+
+  function getCores() {
+    const c = window.coresPersonalizadas || {};
+    return {
+      entrada: c.entrada || CORES_FALLBACK.entrada,
+      saida: c.saida || CORES_FALLBACK.saida,
+      saldo: c.saldo || CORES_FALLBACK.saldo,
+      beneficios: c.beneficios || {},
+      bancos: c.bancos || {},
+      criptos: c.criptos || {},
+    };
+  }
+
+  /* Converte hex (#6366f1) em rgba(99,102,241,alpha) */
+  function hexParaRgba(hex, alpha) {
+    if (!hex || typeof hex !== "string") return `rgba(99,102,241,${alpha})`;
+    let h = hex.replace("#", "");
+    if (h.length === 3) h = h.split("").map((x) => x + x).join("");
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  /* Mapa de cores por banco (usa coresPersonalizadas.bancos[nome]) */
+  function coresPorBanco(labels) {
+    const cores = getCores();
+    return labels.map((label, i) => cores.bancos[label] || PALETA_AUTO[i % PALETA_AUTO.length]);
+  }
+
+  /* Mapa de cores por benefício */
+  function coresPorBeneficio(labels) {
+    const cores = getCores();
+    return labels.map((label, i) => cores.beneficios[label] || PALETA_AUTO[i % PALETA_AUTO.length]);
+  }
+
+  /* Mapa de cores por cripto (se existir) ou paleta automática */
+  function coresPorCripto(labels) {
+    const cores = getCores();
+    return labels.map((label, i) => cores.criptos[label] || PALETA_AUTO[i % PALETA_AUTO.length]);
+  }
+
+  /* ============ PERÍODO ============ */
 
   function getPeriodoPadrao() {
     const hoje = new Date();
@@ -74,8 +129,7 @@
       });
     }
 
-    /* 🔔 Fatura total: soma o total real de cada fatura ABERTA (não paga, não futura).
-       Usa a lógica do script.js, então inclui parcelas automaticamente. */
+    /* Fatura total: soma o total real de cada fatura ABERTA */
     let faturaTotal = 0;
     if (typeof window.totalFaturaDinamico === "function" && typeof window.mesesFatura === "function") {
       const bancos = (window.configUsuario && window.configUsuario.bancos) || [];
@@ -83,21 +137,25 @@
         const meses = window.mesesFatura(b);
         meses.forEach((mes) => {
           const st = window.statusFatura ? window.statusFatura(b, mes) : "aberta";
-          if (st !== "aberta") return;   // 🔔 só soma faturas ABERTAS
+          if (st !== "aberta") return;
           faturaTotal += window.totalFaturaDinamico(b, mes);
         });
       });
     }
 
+    const cores = getCores();
     const elS = document.getElementById("graficoSaldo");
     const elE = document.getElementById("graficoEntradas");
     const elSai = document.getElementById("graficoSaidas");
     const elC = document.getElementById("graficoCripto");
     const elF = document.getElementById("graficoFatura");
 
-    if (elS) { elS.textContent = money(ent - sai); elS.style.color = (ent - sai) >= 0 ? "var(--success)" : "var(--danger)"; }
-    if (elE) elE.textContent = money(ent);
-    if (elSai) elSai.textContent = money(sai);
+    if (elS) {
+      elS.textContent = money(ent - sai);
+      elS.style.color = (ent - sai) >= 0 ? cores.saldo : cores.saida;
+    }
+    if (elE) { elE.textContent = money(ent); elE.style.color = cores.entrada; }
+    if (elSai) { elSai.textContent = money(sai); elSai.style.color = cores.saida; }
     if (elC) elC.textContent = money(criptoAtual);
     if (elF) elF.textContent = money(faturaTotal);
   }
@@ -127,8 +185,8 @@
         labels,
         datasets: [{
           data: valores,
-          backgroundColor: labels.map((_, i) => PALETA[i % PALETA.length]),
-          borderColor: cssVar("--surface", "#141a2e"),
+          backgroundColor: labels.map((_, i) => PALETA_AUTO[i % PALETA_AUTO.length]),
+          borderColor: getSurfaceColor(),
           borderWidth: 2,
         }],
       },
@@ -162,6 +220,9 @@
     const ctx = document.getElementById("chartBancos");
     if (!ctx) return;
 
+    /* 🔔 Cores por banco vindas de coresPersonalizadas.bancos */
+    const cores = coresPorBanco(labels);
+
     charts.bancos = new Chart(ctx, {
       type: "bar",
       data: {
@@ -169,7 +230,7 @@
         datasets: [{
           label: "Gasto",
           data: valores,
-          backgroundColor: labels.map((_, i) => PALETA[i % PALETA.length]),
+          backgroundColor: cores,
           borderRadius: 6,
         }],
       },
@@ -212,13 +273,30 @@
     const ctx = document.getElementById("chartEvolucao");
     if (!ctx) return;
 
+    /* 🔔 Usa coresPersonalizadas.entrada e .saida */
+    const cores = getCores();
+    const cE = cores.entrada;
+    const cS = cores.saida;
+
     charts.evolucao = new Chart(ctx, {
       type: "line",
       data: {
         labels: meses.map((m) => m.label),
         datasets: [
-          { label: "Entradas", data: entradas, borderColor: "#10b981", backgroundColor: "rgba(16,185,129,0.15)", fill: true, tension: 0.35, borderWidth: 2 },
-          { label: "Saídas", data: saidas, borderColor: "#ef4444", backgroundColor: "rgba(239,68,68,0.15)", fill: true, tension: 0.35, borderWidth: 2 },
+          {
+            label: "Entradas",
+            data: entradas,
+            borderColor: cE,
+            backgroundColor: hexParaRgba(cE, 0.15),
+            fill: true, tension: 0.35, borderWidth: 2,
+          },
+          {
+            label: "Saídas",
+            data: saidas,
+            borderColor: cS,
+            backgroundColor: hexParaRgba(cS, 0.15),
+            fill: true, tension: 0.35, borderWidth: 2,
+          },
         ],
       },
       options: {
@@ -264,14 +342,17 @@
       return;
     }
 
+    /* 🔔 Cores por cripto se existirem, senão paleta automática */
+    const cores = coresPorCripto(labels);
+
     charts.cripto = new Chart(ctx, {
       type: "doughnut",
       data: {
         labels,
         datasets: [{
           data: valores,
-          backgroundColor: labels.map((_, i) => PALETA[i % PALETA.length]),
-          borderColor: cssVar("--surface", "#141a2e"),
+          backgroundColor: cores,
+          borderColor: getSurfaceColor(),
           borderWidth: 2,
         }],
       },
@@ -288,8 +369,6 @@
   /* ============ GRÁFICO: FATURA ============ */
 
   function chartFatura() {
-    /* 🔔 Soma o total real de cada fatura ABERTA (não paga, não futura).
-       Ignora futuras e pagas. Usa a mesma lógica do script.js. */
     const bancos = (window.configUsuario && window.configUsuario.bancos) || [];
     const porBanco = {};
 
@@ -299,7 +378,7 @@
         const meses = window.mesesFatura(b);
         meses.forEach((mes) => {
           const st = window.statusFatura ? window.statusFatura(b, mes) : "aberta";
-          if (st !== "aberta") return;   // 🔔 só soma faturas ABERTAS
+          if (st !== "aberta") return;
           total += window.totalFaturaDinamico(b, mes);
         });
         if (total > 0) porBanco[b] = total;
@@ -313,6 +392,9 @@
     const ctx = document.getElementById("chartFatura");
     if (!ctx) return;
 
+    /* 🔔 Cores por banco (mesmas dos cards de fatura) */
+    const cores = labels.length ? coresPorBanco(labels) : [getGridColor()];
+
     charts.fatura = new Chart(ctx, {
       type: "bar",
       data: {
@@ -320,7 +402,7 @@
         datasets: [{
           label: "Fatura",
           data: valores.length ? valores : [0],
-          backgroundColor: labels.length ? labels.map((_, i) => PALETA[(i + 3) % PALETA.length]) : [getGridColor()],
+          backgroundColor: cores,
           borderRadius: 6,
         }],
       },
@@ -340,6 +422,7 @@
   function chartBeneficios() {
     const beneficios = (window.configUsuario && window.configUsuario.beneficios) || [];
     const trans = window.transacoes || [];
+    const cores = getCores();
 
     const labels = [];
     const valores = [];
@@ -368,6 +451,9 @@
       return;
     }
 
+    /* 🔔 Cor personalizada do benefício (mesma do card) */
+    const coresB = coresPorBeneficio(labels);
+
     charts.beneficios = new Chart(ctx, {
       type: "bar",
       data: {
@@ -375,7 +461,7 @@
         datasets: [{
           label: "Saldo",
           data: valores,
-          backgroundColor: valores.map((v) => v >= 0 ? "#10b981" : "#ef4444"),
+          backgroundColor: coresB,
           borderRadius: 6,
         }],
       },
@@ -404,6 +490,49 @@
     chartCripto();
     chartFatura();
     chartBeneficios();
+  }
+
+  /* =========================================================
+     🔔 APLICAR CORES EM TEMPO REAL
+     Atualiza só as cores dos datasets já existentes e chama update()
+     — evita destruir/recriar os gráficos toda vez
+  ========================================================= */
+
+  function aplicarCores() {
+    const cores = getCores();
+
+    if (charts.evolucao && charts.evolucao.data.datasets.length >= 2) {
+      const cE = cores.entrada;
+      const cS = cores.saida;
+      charts.evolucao.data.datasets[0].borderColor = cE;
+      charts.evolucao.data.datasets[0].backgroundColor = hexParaRgba(cE, 0.15);
+      charts.evolucao.data.datasets[1].borderColor = cS;
+      charts.evolucao.data.datasets[1].backgroundColor = hexParaRgba(cS, 0.15);
+      charts.evolucao.update("none");
+    }
+
+    if (charts.bancos) {
+      charts.bancos.data.datasets[0].backgroundColor = coresPorBanco(charts.bancos.data.labels);
+      charts.bancos.update("none");
+    }
+
+    if (charts.fatura) {
+      charts.fatura.data.datasets[0].backgroundColor = coresPorBanco(charts.fatura.data.labels);
+      charts.fatura.update("none");
+    }
+
+    if (charts.beneficios) {
+      charts.beneficios.data.datasets[0].backgroundColor = coresPorBeneficio(charts.beneficios.data.labels);
+      charts.beneficios.update("none");
+    }
+
+    if (charts.cripto) {
+      charts.cripto.data.datasets[0].backgroundColor = coresPorCripto(charts.cripto.data.labels);
+      charts.cripto.update("none");
+    }
+
+    /* Métricas também recebem as novas cores */
+    renderMetricas();
   }
 
   /* ============ BOTÕES DE PERÍODO ============ */
@@ -474,6 +603,13 @@
     }, 100);
   });
 
+  /* 🔔 Escuta mudanças de tema (que afetam cores de texto/grid dos gráficos) */
+  window.addEventListener("financa-tema-mudou", () => {
+    if (graficosInicializado) renderTudo();
+  });
+
+  /* 🔔 API pública — usada pelo script.js quando as cores são salvas */
   window.graficosIniciar = iniciar;
   window.graficosRenderTudo = renderTudo;
+  window.graficosAplicarCores = aplicarCores;
 })();
