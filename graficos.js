@@ -44,6 +44,8 @@
     "#22c55e", "#eab308", "#e11d48", "#0891b2", "#a855f7",
   ];
 
+  const COR_SEM_BANCO = "#64748b"; // cinza neutro
+
   function getCores() {
     const c = window.coresPersonalizadas || {};
     return {
@@ -91,9 +93,11 @@
   /* Mapa de cores por banco */
   function coresPorBanco(labels) {
     const cores = getCores();
-    return labels.map((label, i) =>
-      corDoMapa(cores.bancos, label, PALETA_AUTO[i % PALETA_AUTO.length])
-    );
+    return labels.map((label, i) => {
+      // 🔔 "Sem banco" sempre em cinza neutro
+      if (label === "Sem banco") return COR_SEM_BANCO;
+      return corDoMapa(cores.bancos, label, PALETA_AUTO[i % PALETA_AUTO.length]);
+    });
   }
 
   /* Mapa de cores por benefício */
@@ -188,6 +192,8 @@
   }
 
   /* ============ GRÁFICO: CATEGORIAS ============ */
+  /* 🔔 Aplica cores personalizadas quando a categoria (modalidade) também
+        existir em benefícios ou bancos; senão paleta automática. */
 
   function chartCategorias() {
     const { inicio, fim } = getPeriodo();
@@ -206,13 +212,23 @@
     const ctx = document.getElementById("chartCategorias");
     if (!ctx) return;
 
+    /* 🔔 Cor: benefício > banco > paleta automática */
+    const cores = getCores();
+    const bg = labels.map((label, i) => {
+      const cB = corDoMapa(cores.beneficios, label, null);
+      if (cB) return cB;
+      const cBc = corDoMapa(cores.bancos, label, null);
+      if (cBc) return cBc;
+      return PALETA_AUTO[i % PALETA_AUTO.length];
+    });
+
     charts.categorias = new Chart(ctx, {
       type: "doughnut",
       data: {
         labels,
         datasets: [{
           data: valores,
-          backgroundColor: labels.map((_, i) => PALETA_AUTO[i % PALETA_AUTO.length]),
+          backgroundColor: bg,
           borderColor: getSurfaceColor(),
           borderWidth: 2,
         }],
@@ -415,6 +431,7 @@
   }
 
   /* ============ GRÁFICO: FATURA ============ */
+  /* 🔔 Inclui faturas abertas, fechadas e pagas (ignora apenas futuras) */
 
   function chartFatura() {
     const bancos = (window.configUsuario && window.configUsuario.bancos) || [];
@@ -426,7 +443,8 @@
         const meses = window.mesesFatura(b);
         meses.forEach((mes) => {
           const st = window.statusFatura ? window.statusFatura(b, mes) : "aberta";
-          if (st !== "aberta") return;
+          // 🔔 Inclui abertas, fechadas e pagas — ignora apenas futuras
+          if (st === "futura") return;
           total += window.totalFaturaDinamico(b, mes);
         });
         if (total > 0) porBanco[b] = total;
@@ -541,6 +559,8 @@
 
   /* =========================================================
      🔔 APLICAR CORES EM TEMPO REAL
+     Estratégia: se o gráfico existe, atualiza dataset + update().
+     Se o gráfico de cripto ainda não existe, cria do zero.
   ========================================================= */
 
   function aplicarCores() {
@@ -553,27 +573,45 @@
       charts.evolucao.data.datasets[0].backgroundColor = hexParaRgba(cE, 0.15);
       charts.evolucao.data.datasets[1].borderColor = cS;
       charts.evolucao.data.datasets[1].backgroundColor = hexParaRgba(cS, 0.15);
-      charts.evolucao.update("none");
+      charts.evolucao.update();
+    }
+
+    if (charts.categorias) {
+      const labels = charts.categorias.data.labels || [];
+      const bg = labels.map((label, i) => {
+        const cB = corDoMapa(cores.beneficios, label, null);
+        if (cB) return cB;
+        const cBc = corDoMapa(cores.bancos, label, null);
+        if (cBc) return cBc;
+        return PALETA_AUTO[i % PALETA_AUTO.length];
+      });
+      charts.categorias.data.datasets[0].backgroundColor = bg;
+      charts.categorias.update();
     }
 
     if (charts.bancos) {
       charts.bancos.data.datasets[0].backgroundColor = coresPorBanco(charts.bancos.data.labels);
-      charts.bancos.update("none");
+      charts.bancos.update();
     }
 
     if (charts.fatura) {
       charts.fatura.data.datasets[0].backgroundColor = coresPorBanco(charts.fatura.data.labels);
-      charts.fatura.update("none");
+      charts.fatura.update();
     }
 
     if (charts.beneficios) {
       charts.beneficios.data.datasets[0].backgroundColor = coresPorBeneficio(charts.beneficios.data.labels);
-      charts.beneficios.update("none");
+      charts.beneficios.update();
     }
 
     if (charts.cripto) {
       charts.cripto.data.datasets[0].backgroundColor = coresPorCripto(charts.cripto.data.labels);
-      charts.cripto.update("none");
+      charts.cripto.update();
+    }
+
+    /* 🔔 Se o gráfico de cripto ainda não existe, cria pra já nascer com a cor certa */
+    if (!charts.cripto && typeof window.criptoCalcularPosicoes === "function") {
+      chartCripto();
     }
 
     /* Métricas também recebem as novas cores */
