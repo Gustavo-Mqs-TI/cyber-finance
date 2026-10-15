@@ -1,5 +1,6 @@
 /* =========================================================
    FINANÇA — Módulo Recorrentes (Firebase)
+   ✅ data-label nas <td> para mobile
 ========================================================= */
 
 (function () {
@@ -110,6 +111,10 @@
     if (elSal) { elSal.textContent = money(saldo); elSal.style.color = saldo >= 0 ? "var(--success)" : "var(--danger)"; }
   }
 
+  /* =========================================================
+     ✅ Tabela com data-label em cada <td>
+  ========================================================= */
+
   function renderTabela() {
     const tbody = document.getElementById("recorrenteLista");
     if (!tbody) return;
@@ -134,14 +139,14 @@
       const bl = inat ? "Inativo" : "Ativo";
       return `
         <tr style="${inat ? "opacity:.55;" : ""}">
-          <td><strong>${escapeHtmlSafe(r.descricao)}</strong></td>
-          <td class="${tp}">${tpL}</td>
-          <td class="valor-cell">${money(r.valor)}</td>
-          <td>${fL}</td>
-          <td>${r.frequencia === "semanal" ? "-" : (r.dia || "-")}</td>
-          <td>${r.banco ? escapeHtmlSafe(r.banco) : "—"}</td>
-          <td>${r.modalidade ? escapeHtmlSafe(r.modalidade) : "—"}</td>
-          <td class="text-right">
+          <td data-label="Descrição"><strong>${escapeHtmlSafe(r.descricao)}</strong></td>
+          <td data-label="Tipo" class="${tp}">${tpL}</td>
+          <td data-label="Valor" class="valor-cell">${money(r.valor)}</td>
+          <td data-label="Frequência">${fL}</td>
+          <td data-label="Dia">${r.frequencia === "semanal" ? "-" : (r.dia || "-")}</td>
+          <td data-label="Banco">${r.banco ? escapeHtmlSafe(r.banco) : "—"}</td>
+          <td data-label="Modalidade">${r.modalidade ? escapeHtmlSafe(r.modalidade) : "—"}</td>
+          <td data-label="Ações" class="text-right">
             <div class="row-actions">
               <span class="status-badge ${bc}" style="margin-right:6px;">${bl}</span>
               <button class="action-btn" onclick="window.recorrenteToggle(${r.id})" title="${inat ? "Ativar" : "Desativar"}">
