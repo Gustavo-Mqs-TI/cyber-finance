@@ -2,7 +2,10 @@
 <html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Finança — Controle Financeiro Pessoal</title>
   <meta name="description" content="Gerencie suas finanças, benefícios e faturas em um só lugar.">
   <link rel="icon" href="data:,">
@@ -10,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="style.css?v=11">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -209,11 +212,11 @@
           <div id="listaBancosConfig" class="item-list">
             <div class="item-row">
               <input type="text" class="item-input" value="Nubank">
-              <button type="button" class="item-remove" onclick="removerItemConfig(this)">×</button>
+              <button type="button" class="item-remove" onclick="removerItemConfig(this)" aria-label="Remover">×</button>
             </div>
             <div class="item-row">
               <input type="text" class="item-input" value="Itaú">
-              <button type="button" class="item-remove" onclick="removerItemConfig(this)">×</button>
+              <button type="button" class="item-remove" onclick="removerItemConfig(this)" aria-label="Remover">×</button>
             </div>
           </div>
 
@@ -239,19 +242,19 @@
           <div id="listaModalidadesConfig" class="item-list">
             <div class="item-row">
               <input type="text" class="item-input" value="Dinheiro">
-              <button type="button" class="item-remove" onclick="removerItemConfig(this)">×</button>
+              <button type="button" class="item-remove" onclick="removerItemConfig(this)" aria-label="Remover">×</button>
             </div>
             <div class="item-row">
               <input type="text" class="item-input" value="Débito">
-              <button type="button" class="item-remove" onclick="removerItemConfig(this)">×</button>
+              <button type="button" class="item-remove" onclick="removerItemConfig(this)" aria-label="Remover">×</button>
             </div>
             <div class="item-row">
               <input type="text" class="item-input" value="Crédito">
-              <button type="button" class="item-remove" onclick="removerItemConfig(this)">×</button>
+              <button type="button" class="item-remove" onclick="removerItemConfig(this)" aria-label="Remover">×</button>
             </div>
             <div class="item-row">
               <input type="text" class="item-input" value="Pix">
-              <button type="button" class="item-remove" onclick="removerItemConfig(this)">×</button>
+              <button type="button" class="item-remove" onclick="removerItemConfig(this)" aria-label="Remover">×</button>
             </div>
           </div>
 
@@ -282,46 +285,46 @@
       </div>
 
       <nav class="sidebar-nav">
-        <button class="nav-item active" data-aba="geral">
+        <button class="nav-item active" data-aba="geral" aria-label="Geral">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
           <span>Geral</span>
         </button>
-        <button class="nav-item" data-aba="beneficios">
+        <button class="nav-item" data-aba="beneficios" aria-label="Benefícios">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
           <span>Benefícios</span>
         </button>
-        <button class="nav-item" data-aba="fatura">
+        <button class="nav-item" data-aba="fatura" aria-label="Fatura">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           <span>Fatura</span>
         </button>
-        <button class="nav-item" data-aba="criptos">
+        <button class="nav-item" data-aba="criptos" aria-label="Criptos">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.5 8h4a2 2 0 0 1 0 4h-4zM9.5 12h4.5a2 2 0 0 1 0 4H9.5zM11 8v8M13 8v8"/></svg>
           <span>Criptos</span>
         </button>
-        <button class="nav-item" data-aba="parcelas">
+        <button class="nav-item" data-aba="parcelas" aria-label="Parcelas">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
           <span>Parcelas</span>
         </button>
-        <button class="nav-item" data-aba="recorrentes">
+        <button class="nav-item" data-aba="recorrentes" aria-label="Recorrentes">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           <span>Recorrentes</span>
         </button>
-        <button class="nav-item" data-aba="metas">
+        <button class="nav-item" data-aba="metas" aria-label="Metas">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
           <span>Metas</span>
         </button>
-        <button class="nav-item" data-aba="graficos">
+        <button class="nav-item" data-aba="graficos" aria-label="Gráficos">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           <span>Gráficos</span>
         </button>
       </nav>
 
       <div class="sidebar-footer">
-        <button class="nav-item" id="btnPerfilSide">
+        <button class="nav-item" id="btnPerfilSide" aria-label="Perfil">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span>Perfil</span>
         </button>
-        <button class="nav-item nav-item-danger" id="btnLogout">
+        <button class="nav-item nav-item-danger" id="btnLogout" aria-label="Sair">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           <span>Sair</span>
         </button>
@@ -338,11 +341,11 @@
         </div>
 
         <div class="topbar-right">
-          <button class="icon-btn" id="btnCores" title="Personalizar cores">
+          <button class="icon-btn" id="btnCores" title="Personalizar cores" aria-label="Personalizar cores">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
           </button>
 
-          <button class="icon-btn" id="btnTema" title="Alternar tema">
+          <button class="icon-btn" id="btnTema" title="Alternar tema" aria-label="Alternar tema">
             <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
           </button>
@@ -516,6 +519,8 @@
         </div>
 
       </section>
+
+      <!-- ⬇️ CONTINUA NA PARTE 2 ⬇️ -->
 
       <!-- ==============================
            ABA: BENEFÍCIOS
