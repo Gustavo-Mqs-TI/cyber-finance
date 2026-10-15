@@ -2332,3 +2332,118 @@ select:-webkit-autofill:focus {
 
   .auth-card { padding: 22px 18px; }
 }
+
+
+/* =========================================================
+   🔧 FIX RESPONSIVO — CORREÇÕES MOBILE
+========================================================= */
+
+/* Guarda-chuva contra overflow horizontal */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img, canvas, svg, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ===== Bottom-nav com scroll horizontal quando tem muitos itens ===== */
+@media (max-width: 1024px) {
+  .sidebar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .sidebar::-webkit-scrollbar { display: none; }
+
+  .sidebar-nav {
+    justify-content: flex-start;
+    gap: 2px;
+    min-width: max-content;
+  }
+
+  .nav-item {
+    min-width: 68px;
+    flex: 0 0 auto;
+  }
+
+  .sidebar-footer {
+    flex: 0 0 auto;
+    margin-left: auto;
+    position: sticky;
+    right: 0;
+    background: var(--bg-elevated);
+    box-shadow: -12px 0 16px -8px var(--bg-elevated);
+  }
+}
+
+/* ===== Metrics no mobile: 2 colunas em vez de 3 ===== */
+@media (max-width: 640px) {
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+  }
+
+  .metric-value {
+    font-size: 15px;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  /* Painel-head quebra linha em vez de espremer */
+  .panel-head {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .panel-head > div:first-child {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .panel-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  /* Título de página + botões no topbar */
+  .topbar-left { min-width: 0; flex: 1; }
+  #pageTitle {
+    font-size: 20px;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  /* Modais full-screen no mobile */
+  .modal { padding: 0; }
+  .modal-content,
+  .modal-content-wide {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    margin: 0;
+    max-height: 94vh;
+    overflow-y: auto;
+  }
+
+  /* Inputs com font-size >= 16px evitam zoom no iOS */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Esconde o título dos svg/ícones quebrando */
+  .metric-label {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* ===== Muito pequeno (≤380px) ===== */
+@media (max-width: 380px) {
+  .metrics-grid { grid-template-columns: 1fr !important; }
+  .nav-item { min-width: 60px; font-size: 10px; }
+}
