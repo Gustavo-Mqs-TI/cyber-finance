@@ -1,5 +1,6 @@
 /* =========================================================
    FINANÇA — Módulo Criptos (Firebase)
+   ✅ data-label nas <td> para mobile
 ========================================================= */
 
 (function () {
@@ -272,6 +273,7 @@
 
   /* =========================================================
      RENDER — TABELA
+     ✅ Cada <td> recebe data-label com o nome da coluna
   ========================================================= */
 
   function renderTabela(filtro) {
@@ -315,18 +317,18 @@
       }
       return `
         <tr>
-          <td>${formatarDataSafe(op.data)}</td>
-          <td class="${tp}">${tpL}</td>
-          <td><strong>${escapeHtmlSafe(op.cripto)}</strong></td>
-          <td class="valor-cell">${qtdFmt(op.quantidade)}</td>
-          <td class="valor-cell">${money(op.valorBruto)}</td>
-          <td class="valor-cell">${money(op.taxa)}</td>
-          <td class="valor-cell">${money(op.valorLiquido)}</td>
-          <td class="valor-cell">${money(pu)}</td>
-          <td class="valor-cell">${pmTxt}</td>
-          <td class="valor-cell" style="color:${cor}">${lTxt}</td>
-          <td class="valor-cell" style="color:${cor}">${rTxt}</td>
-          <td class="text-right">
+          <td data-label="Data">${formatarDataSafe(op.data)}</td>
+          <td data-label="Tipo" class="${tp}">${tpL}</td>
+          <td data-label="Cripto"><strong>${escapeHtmlSafe(op.cripto)}</strong></td>
+          <td data-label="Qtd" class="valor-cell">${qtdFmt(op.quantidade)}</td>
+          <td data-label="Valor Bruto" class="valor-cell">${money(op.valorBruto)}</td>
+          <td data-label="Taxa" class="valor-cell">${money(op.taxa)}</td>
+          <td data-label="Valor Líq." class="valor-cell">${money(op.valorLiquido)}</td>
+          <td data-label="Preço Unit." class="valor-cell">${money(pu)}</td>
+          <td data-label="Preço Médio" class="valor-cell">${pmTxt}</td>
+          <td data-label="Lucro/Prej." class="valor-cell" style="color:${cor}">${lTxt}</td>
+          <td data-label="Rentab." class="valor-cell" style="color:${cor}">${rTxt}</td>
+          <td data-label="Ações" class="text-right">
             <div class="row-actions">
               <button class="action-btn" onclick="window.criptoEditar(${op.id})" title="Editar">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
