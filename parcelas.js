@@ -1,5 +1,6 @@
 /* =========================================================
    FINANÇA — Módulo Parcelas (Firebase)
+   ✅ data-label nas <td> para mobile
 ========================================================= */
 
 (function () {
@@ -155,6 +156,10 @@
     if (elM) elM.textContent = money(mesTot);
   }
 
+  /* =========================================================
+     ✅ Tabela com data-label em cada <td>
+  ========================================================= */
+
   function renderTabela() {
     const tbody = document.getElementById("parcelaLista");
     if (!tbody) return;
@@ -184,20 +189,23 @@
       const fl = pct >= 100 ? "success" : pct >= 50 ? "" : "warning";
       return `
         <tr>
-          <td><strong>${escapeHtmlSafe(c.descricao)}</strong>${c.categoria ? `<br><small style="color:var(--text-dim)">${escapeHtmlSafe(c.categoria)}</small>` : ""}</td>
-          <td>${escapeHtmlSafe(c.banco)}</td>
-          <td class="valor-cell">${money(c.valorTotal)}</td>
-          <td class="valor-cell">${money(vp)}</td>
-          <td style="min-width:160px;">
+          <td data-label="Descrição">
+            <strong>${escapeHtmlSafe(c.descricao)}</strong>
+            ${c.categoria ? `<br><small style="color:var(--text-dim)">${escapeHtmlSafe(c.categoria)}</small>` : ""}
+          </td>
+          <td data-label="Banco">${escapeHtmlSafe(c.banco)}</td>
+          <td data-label="Valor total" class="valor-cell">${money(c.valorTotal)}</td>
+          <td data-label="Parcela" class="valor-cell">${money(vp)}</td>
+          <td data-label="Progresso" style="min-width:160px;">
             <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-dim);margin-bottom:2px;">
               <span>${pg} / ${c.numeroParcelas}</span>
               <span>${pct.toFixed(0)}%</span>
             </div>
             <div class="progress-bar"><div class="progress-bar-fill ${fl}" style="width:${pct}%"></div></div>
           </td>
-          <td class="valor-cell">${money(rs)}</td>
-          <td>${pxT}</td>
-          <td class="text-right">
+          <td data-label="Restante" class="valor-cell">${money(rs)}</td>
+          <td data-label="Próx. venc.">${pxT}</td>
+          <td data-label="Ações" class="text-right">
             <div class="row-actions">
               <span class="status-badge ${st}" style="margin-right:6px;">${stL}</span>
               ${pg < c.numeroParcelas ? `
